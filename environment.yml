@@ -1,0 +1,10 @@
+name: eeg_manylabs_ac
+channels:
+  - defaults
+dependencies:
+  - python=3.10.4      
+  - pip=21.2.4
+  - statsmodels=0.13.2    
+  - pip:
+    - mne==1.0
+
