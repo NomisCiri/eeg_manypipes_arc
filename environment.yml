@@ -1,4 +1,0 @@
-name: eeg_manylabs_ac
-channels:
-  - defaults
-prefix: /Users/ciranka/anaconda3/envs/eeg_manylabs_ac
