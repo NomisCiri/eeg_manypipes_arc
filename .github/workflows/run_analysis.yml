@@ -96,4 +96,5 @@ jobs:
     - name: Datalad get some data for testing
       shell: bash -l {0}
       run: |
+        cd eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
