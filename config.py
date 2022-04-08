@@ -5,6 +5,9 @@ from pathlib import Path
 
 import numpy as np
 
+# File paths
+# --------------------------------------------------------------------
+
 # Where to find the data (depending on user who runs the code)
 # just add new users with additional "elif" logic clauses
 #
@@ -18,9 +21,19 @@ else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
 
 
+FNAME_BADS_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-channels.json"
+)
+
+
+# Constants
+# --------------------------------------------------------------------
+
 BAD_SUBJS = {
     99: "Add new Bad subjs like this (this is an example)",
 }
 
 # originally, subjects from 1 to 33
 SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))
+
+OVERWRITE_MSG = "\nfile exists and overwrite is False:\n\n>>> {}\n"

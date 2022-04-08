@@ -15,6 +15,7 @@ dependencies:
   - h5io
   - h5py
   - pymatreader
+  - pyprep
   - ipython
   - ipykernel
   - pre-commit
@@ -22,5 +23,6 @@ dependencies:
   - isort
   - flake8
   - flake8-docstrings
+  - click
   - pip:
     - datalad

@@ -1,8 +1,9 @@
 """General utility functions that are re-used in different scripts."""
-
+import warnings
 from pathlib import Path
 
 import click
+import mne
 from mne.utils import logger
 
 
@@ -50,3 +51,22 @@ def parse_overwrite(defaults):
         logger.info("Nothing to overwrite, use defaults defined in script.\n")
 
     return defaults
+
+
+def get_raw_data(fpath_set):
+    """Read data as MNE ``raw`` object, based on the path to a .set file."""
+    # Read data, channel locations are automatically set
+    # suppress a known warning that is not of consequence
+    # https://github.com/mne-tools/mne-python/issues/10505
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=RuntimeWarning, message="Not setting positions of 2 .*"
+        )
+    raw = mne.io.read_raw_eeglab(fpath_set, eog=["VEOG", "HEOG"])
+
+    # Set some known metadata
+    raw.info["line_freq"] = 50
+
+    # Sanity check we have the expected number of events
+    err_msg = f"    >>> {len(raw.annotations)} != the expected 1200"
+    assert len(raw.annotations) == 1200, err_msg
