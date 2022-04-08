@@ -1,0 +1,100 @@
+name: Run analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  create:
+    branches: [main]
+    tags: ['**']
+  schedule:
+    - cron: "0 4 * * MON"
+
+jobs:
+  run_all:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.9"]
+    env:
+      TZ: Europe/Berlin
+      FORCE_COLOR: true
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set git name/email
+      run: |
+        git config --global user.email "ci-bot@eeg_manypipes_arc.com"
+        git config --global user.name "ci-bot"
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        mamba-version: "*"
+        channels: conda-forge, defaults
+        channel-priority: true
+        activate-environment: emp
+        environment-file: environment.yml
+
+    - name: Install git-annex ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash -l {0}
+      run: mamba install -c conda-forge git-annex
+
+    - name: Install git-annex macos
+      if: matrix.os == 'macos-latest'
+      shell: bash -l {0}
+      run: brew install git-annex
+
+    - name: Install git-annex windows
+      if: matrix.os == 'windows-latest'
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install git-annex --yes --ignore-checksums
+
+    - name: check environment
+      shell: bash -l {0}
+      run: |
+        conda info
+        conda list
+        conda env list
+
+    - name: MNE --> Check system
+      shell: bash -l {0}
+      run: |
+        mne sys_info
+
+    - name: Datalad --> Check system
+      shell: bash -l {0}
+      run: |
+        datalad --version
+        datalad wtf
+
+    - name: install pre-commit hooks
+      shell: bash -l {0}
+      run: |
+        pre-commit install
+
+    - name: Check code style
+      if: "matrix.os == 'ubuntu-latest'"
+      shell: bash -l {0}
+      run: |
+        flake8 --docstring-convention numpy .
+        black . --check
+        isort . --check
+        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
+
+    - name: Datalad install the dataset
+      shell: bash -l {0}
+      run: |
+        datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc
+
+    - name: Datalad get some data for testing
+      shell: bash -l {0}
+      run: |
+        cd eeg_manypipes_arc
+        datalad get sourcedata/eeg_eeglab/EMP01*
