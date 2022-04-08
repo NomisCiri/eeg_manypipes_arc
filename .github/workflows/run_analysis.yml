@@ -35,6 +35,22 @@ jobs:
         activate-environment: emp
         environment-file: environment.yml
 
+    - name: Install git-annex ubuntu
+      if: matrix.platform == 'ubuntu-latest'
+      shell: bash -l {0}
+      run: mamba install -c conda-forge git-annex
+
+    - name: Install git-annex macos
+      if: matrix.platform == 'macos-latest'
+      shell: bash -l {0}
+      run: brew install git-annex
+
+    - name: Install git-annex windows
+      if: matrix.platform == 'windows-latest'
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install git-annex --yes --ignore-checksums
+
     - name: check environment
       shell: bash -l {0}
       run: |
