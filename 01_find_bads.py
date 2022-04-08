@@ -1,4 +1,4 @@
-"""Read data from source format (EEGLAB) and save as MNE format (.fif)."""
+"""Find bad channels via PyPrep and save as JSON."""
 
 # %%
 # Imports

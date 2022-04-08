@@ -2,11 +2,11 @@ name: Run analysis
 
 on:
   push:
-    branches: [ main ]
+    branches: ['**']
   pull_request:
-    branches: [ main ]
+    branches: ['**']
   create:
-    branches: [main]
+    branches: ['**']
     tags: ['**']
   schedule:
     - cron: "0 4 * * MON"
@@ -98,3 +98,8 @@ jobs:
       run: |
         cd eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
+
+    - name: Run 01_find_bads
+      shell: bash -l {0}
+      run: |
+        python 01_find_bads.py --sub=1
