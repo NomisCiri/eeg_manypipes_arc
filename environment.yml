@@ -1,10 +1,29 @@
-name: eeg_manylabs_ac
+name: emp
 channels:
+  - conda-forge
   - defaults
 dependencies:
-  - python=3.10     
-  - pip=21.2
-  - statsmodels=0.13    
+  - python<3.11
+  - pip
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - seaborn
+  - statsmodels
+  - mne-base
+  - h5io
+  - h5py
+  - pymatreader
+  - ipython
+  - ipykernel
+  - pre-commit
+  - black
+  - isort
+  - flake8
+  - flake8-docstrings
+  - git-annex
   - pip:
-    - mne==1.0
+    - datalad
+
 
