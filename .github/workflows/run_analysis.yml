@@ -41,17 +41,17 @@ jobs:
         environment-file: environment.yml
 
     - name: Install git-annex ubuntu
-      if: matrix.platform == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest'
       shell: bash -l {0}
       run: mamba install -c conda-forge git-annex
 
     - name: Install git-annex macos
-      if: matrix.platform == 'macos-latest'
+      if: matrix.os == 'macos-latest'
       shell: bash -l {0}
       run: brew install git-annex
 
     - name: Install git-annex windows
-      if: matrix.platform == 'windows-latest'
+      if: matrix.os == 'windows-latest'
       uses: crazy-max/ghaction-chocolatey@v1
       with:
         args: install git-annex --yes --ignore-checksums
@@ -80,7 +80,7 @@ jobs:
         pre-commit install
 
     - name: Check code style
-      if: "matrix.platform == 'ubuntu-latest'"
+      if: "matrix.os == 'ubuntu-latest'"
       shell: bash -l {0}
       run: |
         flake8 --docstring-convention numpy .
