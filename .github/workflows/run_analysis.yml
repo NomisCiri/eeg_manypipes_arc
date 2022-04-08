@@ -11,6 +11,10 @@ on:
   schedule:
     - cron: "0 4 * * MON"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
+
 jobs:
   run_all:
     runs-on: ${{ matrix.os }}
