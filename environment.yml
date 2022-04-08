@@ -22,6 +22,5 @@ dependencies:
   - isort
   - flake8
   - flake8-docstrings
-  - git-annex
   - pip:
     - datalad

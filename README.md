@@ -28,8 +28,16 @@ We recommend that you follow these steps
 We recommend that you make use of the data hosted on GIN via
 [Datalad](https://handbook.datalad.org/en/latest/index.html).
 
-If you followed the installation steps above, you should have a working installation of
-Datalad in your environment already.
+If you followed the installation steps above, you should **almost** have a working installation of
+Datalad in your environment.
+The last step that is (probably) missing, is to install
+[git-annex](https://git-annex.branchable.com/).
+
+Depending on your operating system, do it as follows:
+    - ubuntu: `mamba install -c conda-forge git-annex`
+    - macos: `brew install git-annex` (use [Homebrew](https://brew.sh/))
+    - windows: `choco install git-annex` (use [Chocolatey](https://chocolatey.org/))
+
 Use the following steps to download the data:
 
 1. clone: `datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc`
