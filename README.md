@@ -1,3 +1,5 @@
+[![Run analysis](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml/badge.svg)](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml)
+
 # eeg_manypipes_arc
 
 This project contains all code to reproduce the analyses of the EEG manypipes project
