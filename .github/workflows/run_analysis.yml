@@ -25,6 +25,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Set git name/email
+      run: |
+        git config --global user.email "ci-bot@eeg_manypipes_arc.com"
+        git config --global user.name "ci-bot"
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v2
       with:
