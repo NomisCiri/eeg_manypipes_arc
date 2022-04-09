@@ -26,6 +26,12 @@ jobs:
     env:
       TZ: Europe/Berlin
       FORCE_COLOR: true
+    default-shell:
+      name: Default shell
+      runs-on: ${{ matrix.os }}
+      defaults:
+        run:
+          shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
 
@@ -59,12 +65,10 @@ jobs:
 
     - name: Install git-annex ubuntu
       if: matrix.os == 'ubuntu-latest'
-      shell: bash -l {0}
       run: mamba install -c conda-forge git-annex
 
     - name: Install git-annex macos
       if: matrix.os == 'macos-latest'
-      shell: bash -l {0}
       run: brew install git-annex
 
     - name: Install git-annex windows
@@ -74,31 +78,26 @@ jobs:
         args: install git-annex --yes --ignore-checksums
 
     - name: check environment
-      shell: bash -l {0}
       run: |
         conda info
         conda list
         conda env list
 
     - name: MNE --> Check system
-      shell: bash -l {0}
       run: |
         mne sys_info
 
     - name: Datalad --> Check system
-      shell: bash -l {0}
       run: |
         datalad --version
         datalad wtf
 
     - name: install pre-commit hooks
-      shell: bash -l {0}
       run: |
         pre-commit install
 
     - name: Check code style
       if: "matrix.os == 'ubuntu-latest'"
-      shell: bash -l {0}
       run: |
         flake8 --docstring-convention numpy .
         black . --check
@@ -108,17 +107,14 @@ jobs:
     - name: Datalad install the dataset
       # (only if not already restored from cache)
       if: steps.cache.outputs.cache-hit != 'true'
-      shell: bash -l {0}
       run: |
         datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc
 
     - name: Datalad get some data for testing
-      shell: bash -l {0}
       run: |
         cd eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
 
     - name: Run 01_find_bads
-      shell: bash -l {0}
       run: |
         python 01_find_bads.py --sub=1
