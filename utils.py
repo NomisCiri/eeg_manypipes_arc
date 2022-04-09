@@ -70,3 +70,5 @@ def get_raw_data(fpath_set):
     # Sanity check we have the expected number of events
     err_msg = f"    >>> {len(raw.annotations)} != the expected 1200"
     assert len(raw.annotations) == 1200, err_msg
+
+    return raw
