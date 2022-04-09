@@ -34,6 +34,18 @@ jobs:
         git config --global user.email "ci-bot@eeg_manypipes_arc.com"
         git config --global user.name "ci-bot"
 
+    - name: Cache multiple paths
+      uses: actions/cache@v3
+      env:
+        # Increase this value to reset cache if environment.yml has not changed
+        CACHE_NUMBER: 0
+      with:
+        path: |
+          ~/conda_pkgs_dir
+          /home/runner/work/eeg_manypipes_arc/eeg_manypipes_arc/eeg_manypipes_arc
+        key: v-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v2
       with:
@@ -43,6 +55,7 @@ jobs:
         channel-priority: true
         activate-environment: emp
         environment-file: environment.yml
+        use-only-tar-bz2: true
 
     - name: Install git-annex ubuntu
       if: matrix.os == 'ubuntu-latest'
@@ -93,6 +106,8 @@ jobs:
         pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
 
     - name: Datalad install the dataset
+      # (only if not already restored from cache)
+      if: steps.cache.outputs.cache-hit != 'true'
       shell: bash -l {0}
       run: |
         datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc
