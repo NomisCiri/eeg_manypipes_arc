@@ -26,12 +26,9 @@ jobs:
     env:
       TZ: Europe/Berlin
       FORCE_COLOR: true
-    default-shell:
-      name: Default shell
-      runs-on: ${{ matrix.os }}
-      defaults:
-        run:
-          shell: bash -l {0}
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
 
