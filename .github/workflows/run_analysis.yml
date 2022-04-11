@@ -61,6 +61,11 @@ jobs:
         environment-file: environment.yml
         use-only-tar-bz2: true
 
+    - name: TEMPORARY FOR DEBUGGING
+      if: matrix.os == 'windows-latest'
+      run: |
+        python -c "from pathlib import Path; print(Path(r'D:\a\eeg_manypipes_arc\eeg_manypipes_arc\eeg_manypipes_arc'))"
+
     - name: Install git-annex ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: mamba install -c conda-forge git-annex

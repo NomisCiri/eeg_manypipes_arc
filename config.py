@@ -15,6 +15,8 @@ import numpy as np
 home = os.path.expanduser("~")
 if "stefanappelhoff" in home:
     FPATH_DS = Path("/home/stefanappelhoff/Desktop/ds/eeg_manypipes_arc")
+elif "appelhoff" in home:
+    FPATH_DS = Path("/mnt/home/appelhoff/emp/ds/eeg_manypipes_arc")
 elif "ciranka" in home:
     FPATH_DS = Path("/... absolute path to data")
 elif "runner" in home:
@@ -27,13 +29,7 @@ elif "runner" in home:
         / "eeg_manypipes_arc"
     )
     if os.name == "nt":
-        FPATH_DS = (
-            Path("D:")
-            / "a"
-            / "eeg_manypipes_arc"
-            / "eeg_manypipes_arc"
-            / "eeg_manypipes_arc"
-        )
+        FPATH_DS = Path(r"D:\a\eeg_manypipes_arc\eeg_manypipes_arc\eeg_manypipes_arc")
 
 else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
