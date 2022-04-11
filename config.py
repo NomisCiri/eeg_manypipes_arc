@@ -19,9 +19,7 @@ elif "ciranka" in home:
     FPATH_DS = Path("/... absolute path to data")
 elif "runner" in home:
     # GitHub Actions CI
-    FPATH_DS = Path(
-        "/home/runner/work/eeg_manypipes_arc/eeg_manypipes_arc/eeg_manypipes_arc"
-    )
+    FPATH_DS = Path(home) / "work/eeg_manypipes_arc/eeg_manypipes_arc/eeg_manypipes_arc"
 else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
 
