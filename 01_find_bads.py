@@ -9,7 +9,13 @@ from pathlib import Path
 import pyprep
 from mne.utils import logger
 
-from config import FNAME_BADS_TEMPLATE, FPATH_DS, OVERWRITE_MSG, SUBJS
+from config import (
+    FNAME_BADS_TEMPLATE,
+    FPATH_DS,
+    OVERWRITE_MSG,
+    PATH_NOT_FOUND_MSG,
+    SUBJS,
+)
 from utils import get_raw_data, parse_overwrite
 
 # %%
@@ -41,7 +47,7 @@ if not hasattr(sys, "ps1"):
 if sub not in SUBJS:
     raise ValueError(f"'{sub}' is not a valid subject ID.\nUse: {SUBJS}")
 if not fpath_ds.exists():
-    raise RuntimeError("The specified path to the data does not exist.")
+    raise RuntimeError(PATH_NOT_FOUND_MSG.format(fpath_ds))
 if overwrite:
     logger.info("`overwrite` is set to ``True``.")
 

@@ -38,6 +38,7 @@ jobs:
         git config --global user.name "ci-bot"
 
     - name: Cache multiple paths
+      id: cache
       uses: actions/cache@v3
       env:
         # Increase this value to reset cache if environment.yml has not changed
@@ -114,4 +115,4 @@ jobs:
 
     - name: Run 01_find_bads
       run: |
-        python 01_find_bads.py --sub=1
+        python 01_find_bads.py --sub=1 --overwrite=True

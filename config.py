@@ -19,7 +19,13 @@ elif "ciranka" in home:
     FPATH_DS = Path("/... absolute path to data")
 elif "runner" in home:
     # GitHub Actions CI
-    FPATH_DS = Path(home) / "work/eeg_manypipes_arc/eeg_manypipes_arc/eeg_manypipes_arc"
+    FPATH_DS = (
+        Path(home)
+        / "work"
+        / "eeg_manypipes_arc"
+        / "eeg_manypipes_arc"
+        / "eeg_manypipes_arc"
+    )
 else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
 
@@ -40,3 +46,4 @@ BAD_SUBJS = {
 SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))
 
 OVERWRITE_MSG = "\nfile exists and overwrite is False:\n\n>>> {}\n"
+PATH_NOT_FOUND_MSG = "\npath not found\n\n>>> {}\n"
