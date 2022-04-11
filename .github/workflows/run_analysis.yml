@@ -4,12 +4,16 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: ['**']
   create:
-    branches: [main]
+    branches: ['**']
     tags: ['**']
   schedule:
     - cron: "0 4 * * MON"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
 
 jobs:
   run_all:
@@ -22,13 +26,29 @@ jobs:
     env:
       TZ: Europe/Berlin
       FORCE_COLOR: true
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set git name/email
       run: |
         git config --global user.email "ci-bot@eeg_manypipes_arc.com"
         git config --global user.name "ci-bot"
+
+    - name: Cache multiple paths
+      id: cache
+      uses: actions/cache@v3
+      env:
+        # Increase this value to reset cache if environment.yml has not changed
+        CACHE_NUMBER: 0
+      with:
+        path: |
+          ~/conda_pkgs_dir
+          /home/runner/work/eeg_manypipes_arc/eeg_manypipes_arc/eeg_manypipes_arc
+        key: v-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v2
@@ -39,15 +59,14 @@ jobs:
         channel-priority: true
         activate-environment: emp
         environment-file: environment.yml
+        use-only-tar-bz2: true
 
     - name: Install git-annex ubuntu
       if: matrix.os == 'ubuntu-latest'
-      shell: bash -l {0}
       run: mamba install -c conda-forge git-annex
 
     - name: Install git-annex macos
       if: matrix.os == 'macos-latest'
-      shell: bash -l {0}
       run: brew install git-annex
 
     - name: Install git-annex windows
@@ -57,31 +76,26 @@ jobs:
         args: install git-annex --yes --ignore-checksums
 
     - name: check environment
-      shell: bash -l {0}
       run: |
         conda info
         conda list
         conda env list
 
     - name: MNE --> Check system
-      shell: bash -l {0}
       run: |
         mne sys_info
 
     - name: Datalad --> Check system
-      shell: bash -l {0}
       run: |
         datalad --version
         datalad wtf
 
     - name: install pre-commit hooks
-      shell: bash -l {0}
       run: |
         pre-commit install
 
     - name: Check code style
       if: "matrix.os == 'ubuntu-latest'"
-      shell: bash -l {0}
       run: |
         flake8 --docstring-convention numpy .
         black . --check
@@ -89,12 +103,18 @@ jobs:
         pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
 
     - name: Datalad install the dataset
-      shell: bash -l {0}
+      # (only if not already restored from cache)
+      if: steps.cache.outputs.cache-hit != 'true'
       run: |
         datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc
 
     - name: Datalad get some data for testing
-      shell: bash -l {0}
       run: |
         cd eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
+
+    - name: Run 01_find_bads
+      # skip this CI step in windows, because it takes too much RAM for the runner
+      if: "matrix.os != 'windows-latest'"
+      run: |
+        python 01_find_bads.py --sub=1 --overwrite=True
