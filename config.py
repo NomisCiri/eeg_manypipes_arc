@@ -26,6 +26,15 @@ elif "runner" in home:
         / "eeg_manypipes_arc"
         / "eeg_manypipes_arc"
     )
+    if os.name == "nt":
+        FPATH_DS = (
+            Path("D:")
+            / "a"
+            / "eeg_manypipes_arc"
+            / "eeg_manypipes_arc"
+            / "eeg_manypipes_arc"
+        )
+
 else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
 
