@@ -46,7 +46,8 @@ jobs:
       with:
         path: |
           ~/conda_pkgs_dir
-        key: v-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          $GITHUB_WORKSPACE/eeg_manypipes_arc
+        key: v-${{ env.CACHE_NUMBER }}-${{ matrix.os }}-${{ hashFiles('environment.yml') }}
 
 
     - name: Set up Python ${{ matrix.python-version }}

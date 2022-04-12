@@ -55,6 +55,10 @@ FNAME_COMPONENTS_TEMPLATE = os.path.join(
 FNAME_ICA_RAW_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_ica-raw.fif.gz"
 )
+# report for ICA
+FNAME_REPORT_ICA_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_report-ica.html"
+)
 
 
 # Constants

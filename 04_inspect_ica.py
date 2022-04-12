@@ -3,12 +3,16 @@
 Either load existing metadata on which ICA components to reject,
 or visually screen components and save metadata.
 
-"""
+When running this in interactive mode, inspect the ICA components
+to determine which to exclude.
+Once you have decided, fix it in the code and run the code
+with a re-started session to produce the files and reports.
 
-import json
+"""
 
 # %%
 # Imports
+import json
 import os
 import sys
 from pathlib import Path
@@ -23,6 +27,7 @@ from config import (
     FNAME_COMPONENTS_TEMPLATE,
     FNAME_ICA_RAW_TEMPLATE,
     FNAME_ICA_TEMPLATE,
+    FNAME_REPORT_ICA_TEMPLATE,
     FNAME_SEGMENTS_TEMPLATE,
     FPATH_DS,
     OVERWRITE_MSG,
@@ -76,6 +81,14 @@ if fname_comps.exists() and interactive and not overwrite:
 fname_icaraw = Path(FNAME_ICA_RAW_TEMPLATE.format(sub=sub))
 if fname_icaraw.exists() and not overwrite:
     raise RuntimeError(OVERWRITE_MSG.format(fname_icaraw))
+
+fname_report = Path(FNAME_REPORT_ICA_TEMPLATE.format(sub=sub))
+if fname_report.exists() and not overwrite:
+    raise RuntimeError(OVERWRITE_MSG.format(fname_report))
+
+# %%
+# Start a report to save figures
+report = mne.Report(title=f"ICA, subject {sub}")
 
 # %%
 # Get raw data
@@ -176,15 +189,22 @@ if accept_automatic:
 with plt.style.context("default"):
     fig = ica.plot_components(inst=raw)
 
+report.add_figure(fig=fig, title="ICA components", image_format="PNG")
+
 # %%
 # Create VEOG epochs and plot evoked
 epochs_veog = create_eog_epochs(raw, ch_name="VEOG", picks="eeg")
 fig = epochs_veog.average().plot()
 
+report.add_figure(fig=fig, title="VEOG Epochs", image_format="PNG")
+
+
 # %%
 # Create HEOG epochs and plot evoked
 epochs_heog = create_eog_epochs(raw, ch_name="HEOG", picks="eeg")
 fig = epochs_heog.average().plot()
+
+report.add_figure(fig=fig, title="HEOG Epochs", image_format="PNG")
 
 # %%
 # Plot VEOG scores and overlay
@@ -192,8 +212,13 @@ exclude_veog = veog_idx  # change me! (use a list of component indices)
 fig = ica.plot_scores(
     veog_scores, exclude=exclude_veog, title=f"VEOG, exclude: {exclude_veog}"
 )
+
+report.add_figure(fig=fig, title="VEOG scores", image_format="PNG")
+
 fig = ica.plot_overlay(epochs_veog.average(), exclude=exclude_veog, show=False)
 fig.tight_layout()
+
+report.add_figure(fig=fig, title="VEOG overlay", image_format="PNG")
 
 # %%
 # Plot HEOG scores and overlay
@@ -201,12 +226,17 @@ exclude_heog = heog_idx  # change me! (use a list of component indices)
 fig = ica.plot_scores(
     heog_scores, exclude=exclude_heog, title=f"HEOG, exclude: {exclude_heog}"
 )
+
+report.add_figure(fig=fig, title="HEOG scores", image_format="PNG")
+
 fig = ica.plot_overlay(epochs_heog.average(), exclude=exclude_heog, show=False)
 fig.tight_layout()
 
+report.add_figure(fig=fig, title="HEOG overlay", image_format="PNG")
+
 # %%
 # Set ica.exclude attribute
-ica.exclude = list(set(exclude_veog + exclude_heog))
+ica.exclude = sorted(list(set(exclude_veog + exclude_heog)))
 exclude = [int(i) for i in ica.exclude]  # convert numpy.int64 -> int
 assert exclude == ica.exclude
 print(f"Excluding: {exclude}")
@@ -234,5 +264,9 @@ raw_clean.plot(
 # %%
 # Save as ica-cleaned data
 raw_clean.save(fname_icaraw, overwrite=overwrite)
+
+# %%
+# Save the report
+report.save(fname_report, overwrite=overwrite)
 
 # %%
