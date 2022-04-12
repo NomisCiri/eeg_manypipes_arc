@@ -46,7 +46,7 @@ jobs:
       with:
         path: |
           ~/conda_pkgs_dir
-          /home/runner/work/eeg_manypipes_arc/eeg_manypipes_arc/eeg_manypipes_arc
+          $GITHUB_WORKSPACE/eeg_manypipes_arc
         key: v-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
 
 
@@ -111,7 +111,7 @@ jobs:
 
     - name: Datalad get some data for testing
       run: |
-        cd eeg_manypipes_arc
+        $GITHUB_WORKSPACE/eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
 
     - name: Run 01_find_bads
