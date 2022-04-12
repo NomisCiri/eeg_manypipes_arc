@@ -46,7 +46,7 @@ jobs:
       with:
         path: |
           ~/conda_pkgs_dir
-          /home/runner/work/eeg_manypipes_arc/eeg_manypipes_arc/eeg_manypipes_arc
+          $GITHUB_WORKSPACE/eeg_manypipes_arc
         key: v-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
 
 
@@ -54,8 +54,9 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: ${{ matrix.python-version }}
-        mamba-version: "*"
-        channels: conda-forge, defaults
+        miniforge-variant: Mambaforge
+        use-mamba: true
+        channels: conda-forge
         channel-priority: true
         activate-environment: emp
         environment-file: environment.yml
@@ -110,7 +111,7 @@ jobs:
 
     - name: Datalad get some data for testing
       run: |
-        cd eeg_manypipes_arc
+        cd $GITHUB_WORKSPACE/eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
 
     - name: Run 01_find_bads
