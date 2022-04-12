@@ -124,3 +124,7 @@ jobs:
     - name: Run 02_mark_bad_segments
       run: |
         python 02_mark_bad_segments.py --sub=1 --overwrite=True
+
+    - name: Run 03_run_ica
+      run: |
+        python 03_run_ica.py --sub=1 --overwrite=True
