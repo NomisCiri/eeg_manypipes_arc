@@ -111,7 +111,7 @@ jobs:
 
     - name: Datalad get some data for testing
       run: |
-        $GITHUB_WORKSPACE/eeg_manypipes_arc
+        cd $GITHUB_WORKSPACE/eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
 
     - name: Run 01_find_bads
