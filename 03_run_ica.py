@@ -143,6 +143,7 @@ ica.fit(
 
 # %%
 # Save the ica object
+fname_ica.parent.mkdir(parents=True, exist_ok=True)
 ica.save(fname_ica, overwrite=overwrite)
 
 # %%
