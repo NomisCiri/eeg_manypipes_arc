@@ -35,14 +35,25 @@ else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
 
 
+# bad channels
 FNAME_BADS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-channels.json"
 )
+# bad temporal segments
 FNAME_SEGMENTS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-segments.txt"
 )
+# ICA solution
 FNAME_ICA_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_ica.fif.gz"
+)
+# ICA components to exclude
+FNAME_COMPONENTS_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-components.json"
+)
+# raw data after ICA cleaning
+FNAME_ICA_RAW_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_ica-raw.fif.gz"
 )
 
 

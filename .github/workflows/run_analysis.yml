@@ -122,9 +122,15 @@ jobs:
         python 01_find_bads.py --sub=1 --overwrite=True
 
     - name: Run 02_mark_bad_segments
+      # skip this CI step in windows, because it takes too much RAM for the runner
+      if: "matrix.os != 'windows-latest'"
       run: |
         python 02_mark_bad_segments.py --sub=1 --overwrite=True
 
     - name: Run 03_run_ica
       run: |
         python 03_run_ica.py --sub=1 --overwrite=True
+
+    - name: Run 04_inspect_ica
+      run: |
+        python 04_inspect_ica.py --sub=1 --overwrite=True

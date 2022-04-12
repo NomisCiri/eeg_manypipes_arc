@@ -11,10 +11,12 @@ from mne.utils import logger
 @click.option("--sub", type=int, help="Subject number")
 @click.option("--fpath_ds", type=str, help="Data location")
 @click.option("--overwrite", default=False, type=bool, help="Overwrite?")
+@click.option("--interactive", default=False, type=bool, help="Interactive?")
 def get_inputs(
     sub,
     fpath_ds,
     overwrite,
+    interactive,
 ):
     """Parse inputs in case script is run from command line.
 
@@ -30,6 +32,7 @@ def get_inputs(
         sub=sub,
         fpath_ds=fpath_ds,
         overwrite=overwrite,
+        interactive=interactive,
     )
 
     return inputs
@@ -66,6 +69,9 @@ def get_raw_data(fpath_set):
 
     # Set some known metadata
     raw.info["line_freq"] = 50
+
+    # IO1 and IO2 are also EOG channels: very close to the eyes
+    raw = raw.set_channel_types({"IO1": "eog", "IO2": "eog"})
 
     # Sanity check we have the expected number of events
     err_msg = f"    >>> {len(raw.annotations)} != the expected 1200"
