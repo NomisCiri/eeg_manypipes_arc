@@ -120,3 +120,7 @@ jobs:
       if: "matrix.os != 'windows-latest'"
       run: |
         python 01_find_bads.py --sub=1 --overwrite=True
+
+    - name: Run 02_mark_bad_segments
+      run: |
+        python 02_mark_bad_segments.py --sub=1 --overwrite=True

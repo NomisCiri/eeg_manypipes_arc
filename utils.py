@@ -62,7 +62,7 @@ def get_raw_data(fpath_set):
         warnings.filterwarnings(
             "ignore", category=RuntimeWarning, message="Not setting positions of 2 .*"
         )
-    raw = mne.io.read_raw_eeglab(fpath_set, eog=["VEOG", "HEOG"])
+        raw = mne.io.read_raw_eeglab(fpath_set, eog=["VEOG", "HEOG"])
 
     # Set some known metadata
     raw.info["line_freq"] = 50

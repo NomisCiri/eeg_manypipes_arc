@@ -76,11 +76,11 @@ assert "POz" in bads_dict["bad_by_flat"]
 # Save the outputs under derivatives
 bads_dict_sorted = {}
 for key, val in bads_dict.items():
-    bads_dict[key] = sorted(val)
+    bads_dict_sorted[key] = sorted(val)
 
 # ensure the directory exists
 fname_bads.parent.mkdir(parents=True, exist_ok=True)
 
 with open(fname_bads, "w") as fout:
-    json.dump(bads_dict, fout, indent=4, sort_keys=True)
+    json.dump(bads_dict_sorted, fout, indent=4, sort_keys=True)
     fout.write("\n")

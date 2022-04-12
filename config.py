@@ -38,7 +38,9 @@ else:
 FNAME_BADS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-channels.json"
 )
-
+FNAME_SEGMENTS_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-segments.txt"
+)
 
 # Constants
 # --------------------------------------------------------------------
