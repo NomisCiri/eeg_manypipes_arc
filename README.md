@@ -1,4 +1,4 @@
-[![Run analysis](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml/badge.svg)](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml)
+[![Run analysis](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml/badge.svg?branch=main&event=push)](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml)
 
 # eeg_manypipes_arc
 
