@@ -34,7 +34,10 @@ elif "runner" in home:
 else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
 
-
+# The original events.csv files
+FNAME_EVENTS_TEMPLATE = os.path.join(
+    str(FPATH_DS), "sourcedata", "events", "EMP{sub:02}_events.csv"
+)
 # bad channels
 FNAME_BADS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-channels.json"
@@ -59,7 +62,10 @@ FNAME_ICA_RAW_TEMPLATE = os.path.join(
 FNAME_REPORT_ICA_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_report-ica.html"
 )
-
+# epoched data
+FNAME_EPOCHS_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_epo.fif.gz"
+)
 
 # Constants
 # --------------------------------------------------------------------
@@ -73,3 +79,17 @@ SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))
 
 OVERWRITE_MSG = "\nfile exists and overwrite is False:\n\n>>> {}\n"
 PATH_NOT_FOUND_MSG = "\npath not found\n\n>>> {}\n"
+
+# Filtering
+LOW_CUTOFF = 0.1
+HIGH_CUTOFF = 40
+
+DOWNSAMPLE_FREQ = 256
+
+# Events
+TRIGGER_CODES = [
+    {1: "man_made", 2: "natural"},
+    {0: "new", 1: "old"},
+    {1: "hit", 2: "miss", 3: "false_alarm", 4: "correct_rej", 9: "na"},
+    {0: "sub_remembered", 1: "sub_forgotten", 9: "na"},
+]

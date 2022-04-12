@@ -125,7 +125,7 @@ ica = ICA(
 all_idxs = list(range(len(raw.ch_names)))
 
 bad_idxs = [raw.ch_names.index(ii) for ii in raw.info["bads"]]
-eog_idxs = [raw.ch_names.index(ii) for ii in raw.ch_names if "EOG" in ii]
+eog_idxs = mne.pick_types(raw.info, eog=True).tolist()
 
 exclude_idxs = bad_idxs + eog_idxs
 ica_idxs = list(set(all_idxs) - set(exclude_idxs))

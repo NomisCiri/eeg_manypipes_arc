@@ -6,6 +6,8 @@ import click
 import mne
 from mne.utils import logger
 
+from config import TRIGGER_CODES
+
 
 @click.command()
 @click.option("--sub", type=int, help="Subject number")
@@ -78,3 +80,12 @@ def get_raw_data(fpath_set):
     assert len(raw.annotations) == 1200, err_msg
 
     return raw
+
+
+def event2id(event_str):
+    """Convert a 4-digit string (an event) to a human readable description."""
+    event_id = []
+    for event_factor, trigger_code in zip(event_str, TRIGGER_CODES):
+        event_id.append(trigger_code[int(event_factor)])
+
+    return "/".join(event_id)
