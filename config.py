@@ -18,7 +18,7 @@ if "stefanappelhoff" in home:
 elif "appelhoff" in home:
     FPATH_DS = Path("/mnt/home/appelhoff/emp/ds/eeg_manypipes_arc")
 elif "ciranka" in home:
-    FPATH_DS = Path("/... absolute path to data")
+    FPATH_DS = Path("/mnt/home/ciranka/emp/eeg_manypipes_arc/ds/eeg_manypipes_arc")
 elif "runner" in home:
     # GitHub Actions CI
     FPATH_DS = (

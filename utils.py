@@ -3,6 +3,7 @@ import warnings
 from pathlib import Path
 
 import click
+from pandas import read_csv
 import mne
 from mne.utils import logger
 
@@ -72,3 +73,21 @@ def get_raw_data(fpath_set):
     assert len(raw.annotations) == 1200, err_msg
 
     return raw
+
+def get_behavioral_data(fpath_set):
+    """ reads behavioral data for a given subject and returns it as a dataframe
+
+    Args:
+        fpath_set (string): path to behavioral data
+
+    Returns:
+        pd.dataFrame: dataframe containing metadata to be added to the epoched eeg data
+    """
+    metadata = read_csv(fpath_set)
+
+    # Set some known metadata
+    # Sanity check we have the expected number of events
+    err_msg = f"    >>> {len(metadata)} != the expected 1200"
+    assert len(metadata) == 1200, err_msg
+
+    return metadata
