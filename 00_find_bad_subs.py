@@ -3,6 +3,7 @@
 based on either sensitvity index d'
 or binomial test against chance.
 the latter works bc of a clever task design
+To reproduce, you have to delete the bad subs from config.
 """
 # %%
 # Imports
@@ -65,3 +66,5 @@ exdf.to_json(fpath_der / "bad_subs_dPrime.json")
 exDatBino = {"subjectNumber": subexBino, "p_val": binoEx}
 exdfBino = pd.DataFrame(data=exDatBino)
 exdfBino.to_json(fpath_der / "bad_subs_binomial.json")
+
+# %%
