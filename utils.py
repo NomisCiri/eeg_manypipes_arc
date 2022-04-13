@@ -6,6 +6,7 @@ import click
 from pandas import read_csv
 import mne
 from mne.utils import logger
+from scipy import stats
 
 
 @click.command()
@@ -91,3 +92,28 @@ def get_behavioral_data(fpath_set):
     assert len(metadata) == 1200, err_msg
 
     return metadata
+
+def calculate_dPrime(behavior_dat):
+    """calculates the sensitvity index for a given subject
+
+    Args:
+        behavior_dat (pd.dataFrame): a pandas dataframe containing a string that categorizes choices as hits, misses, correct rejections and false alarms
+
+    Returns:
+        dPrime(float): the senstivity index
+    """
+    
+    hitP = (len(behavior_dat.query("behavior=='hit'"))/
+            (len(behavior_dat.query("behavior=='hit'"))+len(behavior_dat.query("behavior=='miss'"))))
+    # false alarm rate 
+    faP  =  (len(behavior_dat.query("behavior=='falsealarm'"))/
+             (len(behavior_dat.query("behavior=='falsealarm'"))+len(behavior_dat.query("behavior=='correctreject'"))))
+
+    # z-scores
+    hitZ = stats.norm.ppf(hitP)
+    faZ  = stats.norm.ppf(faP)
+
+    # d-prime
+    dPrime = hitZ-faZ
+
+    return dPrime

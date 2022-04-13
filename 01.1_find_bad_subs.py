@@ -4,6 +4,7 @@
 import json
 import sys
 from pathlib import Path
+from scipy import stats
 
 from mne.utils import logger
 
@@ -51,7 +52,20 @@ if overwrite:
     logger.info("`overwrite` is set to ``True``.")
 # %%
 fpath_set = fpath_ds / "sourcedata" / "events" / f"EMP{sub:02}_events.csv"
-behavior = get_behavioral_data(fpath_set)
+behavior_dat = get_behavioral_data(fpath_set)
 
+# hit rate
 
+hitP = len(behavior_dat.query("behavior=='hit'"))/(len(behavior_dat.query("behavior=='hit'"))+len(behavior_dat.query("behavior=='miss'")))
+# false alarm rate 
+faP  =  len(behavior_dat.query("behavior=='falsealarm'"))/(len(behavior_dat.query("behavior=='falsealarm'"))+len(behavior_dat.query("behavior=='correctreject'")))
+
+# z-scores
+hitZ = stats.norm.ppf(hitP)
+faZ  = stats.norm.ppf(faP)
+
+# d-prime
+dPrime = hitZ-faZ
+
+return dPrime
 # %%
