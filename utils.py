@@ -3,9 +3,9 @@ import warnings
 from pathlib import Path
 
 import click
-from pandas import read_csv
 import mne
 from mne.utils import logger
+from pandas import read_csv
 from scipy import stats
 
 
@@ -75,15 +75,25 @@ def get_raw_data(fpath_set):
 
     return raw
 
+
 def get_behavioral_data(fpath_set):
-    """ reads behavioral data for a given subject and returns it as a dataframe
+    """Read behavioral data to DataFrame.
 
-    Args:
-        fpath_set (string): path to behavioral data
+    Does the following:
+        - Reads in behavioral data as csv
+        - Checks if data has the expeceted length
 
-    Returns:
-        pd.dataFrame: dataframe containing metadata to be added to the epoched eeg data
+    Parameters
+    ----------
+    fpath_set : string
+        Absolute path to the csv file containing metadata
+
+    Returns
+    -------
+    metadata : pd.DataFrame
+        A pandas DataFrame containing metadata in columns and trials in rows.
     """
+    #
     metadata = read_csv(fpath_set)
 
     # Set some known metadata
@@ -93,27 +103,39 @@ def get_behavioral_data(fpath_set):
 
     return metadata
 
+
 def calculate_dPrime(behavior_dat):
-    """calculates the sensitvity index for a given subject
+    """Calculate the sensitvity index for a given subject.
 
-    Args:
-        behavior_dat (pd.dataFrame): a pandas dataframe containing a string that categorizes choices as hits, misses, correct rejections and false alarms
+    Does the following:
+        - Calculates d'
 
-    Returns:
-        dPrime(float): the senstivity index
+    Parameters
+    ----------
+    behavior_dat : pd.DataFrame
+        metadata of a given subject.
+
+    Returns
+    -------
+    dprime : float
+        the sensitvity index d'.
     """
-    
-    hitP = (len(behavior_dat.query("behavior=='hit'"))/
-            (len(behavior_dat.query("behavior=='hit'"))+len(behavior_dat.query("behavior=='miss'"))))
-    # false alarm rate 
-    faP  =  (len(behavior_dat.query("behavior=='falsealarm'"))/
-             (len(behavior_dat.query("behavior=='falsealarm'"))+len(behavior_dat.query("behavior=='correctreject'"))))
+    # hit rate
+    hitP = len(behavior_dat.query("behavior=='hit'")) / (
+        len(behavior_dat.query("behavior=='hit'"))
+        + len(behavior_dat.query("behavior=='miss'"))
+    )
+    # false alarm rate
+    faP = len(behavior_dat.query("behavior=='falsealarm'")) / (
+        len(behavior_dat.query("behavior=='falsealarm'"))
+        + len(behavior_dat.query("behavior=='correctreject'"))
+    )
 
     # z-scores
     hitZ = stats.norm.ppf(hitP)
-    faZ  = stats.norm.ppf(faP)
+    faZ = stats.norm.ppf(faP)
 
     # d-prime
-    dPrime = hitZ-faZ
+    dPrime = hitZ - faZ
 
     return dPrime
