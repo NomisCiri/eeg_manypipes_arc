@@ -107,7 +107,7 @@ jobs:
       # (only if not already restored from cache)
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc
+        datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc $GITHUB_WORKSPACE/eeg_manypipes_arc
 
     - name: Datalad get some data for testing
       run: |
