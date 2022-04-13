@@ -44,7 +44,10 @@ FNAME_BADS_TEMPLATE = os.path.join(
 # --------------------------------------------------------------------
 
 BAD_SUBJS = {
-    99: "Add new Bad subjs like this (this is an example)",
+    14: "bad Performance",
+    16: "bad Performance",
+    18: "bad Performance",
+    31: "bad Performance",
 }
 
 # originally, subjects from 1 to 33
