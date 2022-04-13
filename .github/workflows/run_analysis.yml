@@ -114,6 +114,10 @@ jobs:
         cd $GITHUB_WORKSPACE/eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
 
+    - name: Run 00_find_bad_subs
+      run: |
+        python 00_find_bad_subs.py
+
     - name: Run 01_find_bads
       # skip this CI step in windows, because it takes too much RAM for the runner
       if: "matrix.os != 'windows-latest'"

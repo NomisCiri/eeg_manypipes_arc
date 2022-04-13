@@ -1,48 +1,67 @@
-"""finds bad subjects based on the senstivity index dprime in a signal detection task and saves them as json"""
+"""finds bad subjects and saves them as json.
+
+based on either sensitvity index d'
+or binomial test against chance.
+the latter works bc of a clever task design
+"""
 # %%
 # Imports
-import json
-import sys
 import pandas as pd
-from pathlib import Path
-from scipy import stats
+from scipy.stats import binom_test
 
-from config import (
-    FNAME_BADS_TEMPLATE,
-    FPATH_DS,
-    OVERWRITE_MSG,
-    PATH_NOT_FOUND_MSG,
-    SUBJS,
-)
+from config import FPATH_DS, SUBJS
 
-#%% settings
-from utils import get_behavioral_data, calculate_dPrime
+# %%
+# settings
+from utils import calculate_dPrime, get_behavioral_data
 
 # %%
 # Filepaths and settings
-rejectionThreshold=0.8# dprime after which we exclude participants
+rejectionThreshold = 0.6  # dprime after which we exclude participants
 fpath_ds = FPATH_DS
 overwrite = False
-fpath_der=fpath_ds / "derivatives"
+fpath_der = fpath_ds / "derivatives"
 
 # %%
 
-subex=[]
-dPrimeEx=[]
+subex = []
+dPrimeEx = []
 
+subexBino = []
+binoEx = []
+# based on d'
 for sub in SUBJS:
     fpath_set = fpath_ds / "sourcedata" / "events" / f"EMP{sub:02}_events.csv"
     behavior_dat = get_behavioral_data(fpath_set)
-    dPrime=calculate_dPrime(behavior_dat)
-    
-    #collect subjects to exclude
-    if dPrime<rejectionThreshold:
+    behavior_dat = behavior_dat.assign(
+        right_wrong=[
+            1 if behav == "correctreject" or behav == "hit" else 0
+            for behav in behavior_dat["behavior"]
+        ]
+    )
+
+    dPrime = calculate_dPrime(behavior_dat)  # get dprime
+    p_val = binom_test(
+        sum(behavior_dat["right_wrong"]),
+        len(behavior_dat["right_wrong"]),
+        p=0.5,
+        alternative="greater",
+    )  # get binmoial test
+
+    # collect subjects to exclude based on d'
+    if dPrime < rejectionThreshold:
         subex.append(sub)
         dPrimeEx.append(dPrime)
-#write excluded ppts with their dprimes int df
-exDat={"subjectNumber":subex, "dPrime":dPrimeEx}    
+
+    # collect subjects to exclude based on binomial test against chance
+    if p_val > 0.001:
+        subexBino.append(sub)
+        binoEx.append(p_val)
+# write excluded ppts with their dprimes int df
+exDat = {"subjectNumber": subex, "dPrime": dPrimeEx}
 exdf = pd.DataFrame(data=exDat)
-exdf.to_json(fpath_der / "bad_subs.json")
+exdf.to_json(fpath_der / "bad_subs_dPrime.json")
 
-
-# %%
+exDatBino = {"subjectNumber": subexBino, "p_val": binoEx}
+exdfBino = pd.DataFrame(data=exDatBino)
+exdfBino.to_json(fpath_der / "bad_subs_binomial.json")
