@@ -16,7 +16,7 @@ from utils import calculate_dPrime, get_behavioral_data
 
 # %%
 # Filepaths and settings
-rejectionThreshold = 0.6  # dprime after which we exclude participants
+rejection_threshold = 0.6  # dprime threshold used to exclude participants
 fpath_ds = FPATH_DS
 overwrite = False
 fpath_der = fpath_ds / "derivatives"
