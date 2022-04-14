@@ -43,7 +43,7 @@ FNAME_BADS_TEMPLATE = os.path.join(
 # Constants
 # --------------------------------------------------------------------
 
-BAD_SUBJS = {14: "bad Performance", 31: "bad Performance"}
+BAD_SUBJS = {14: "bad performance, see 00_find_bad_subs.py", 31: "bad performance, see 00_find_bad_subs.py"}
 
 # originally, subjects from 1 to 33
 SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))
