@@ -100,6 +100,7 @@ for sub in range(1, 34):
         # rejected based on dprime only
         sub_ex_d_bino.append(1)
     else:
+        # not rejected
         sub_ex_d_bino.append(0)
 
     sub_ex.append(sub)
