@@ -46,7 +46,6 @@ jobs:
       with:
         path: |
           ~/conda_pkgs_dir
-          $GITHUB_WORKSPACE/eeg_manypipes_arc
         key: v-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
 
 
@@ -104,15 +103,17 @@ jobs:
         pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
 
     - name: Datalad install the dataset
-      # (only if not already restored from cache)
-      if: steps.cache.outputs.cache-hit != 'true'
       run: |
-        datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc
+        datalad clone https://gin.g-node.org/sappelhoff/eeg_manypipes_arc $GITHUB_WORKSPACE/eeg_manypipes_arc
 
     - name: Datalad get some data for testing
       run: |
         cd $GITHUB_WORKSPACE/eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
+
+    - name: Run 00_find_bad_subs
+      run: |
+        python 00_find_bad_subs.py
 
     - name: Run 01_find_bads
       # skip this CI step in windows, because it takes too much RAM for the runner

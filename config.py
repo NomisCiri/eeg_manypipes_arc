@@ -18,7 +18,7 @@ if "stefanappelhoff" in home:
 elif "appelhoff" in home:
     FPATH_DS = Path("/mnt/home/appelhoff/emp/ds/eeg_manypipes_arc")
 elif "ciranka" in home:
-    FPATH_DS = Path("/... absolute path to data")
+    FPATH_DS = Path("/mnt/home/ciranka/emp/ds/eeg_manypipes_arc")
 elif "runner" in home:
     # GitHub Actions CI
     FPATH_DS = (
@@ -44,9 +44,9 @@ FNAME_BADS_TEMPLATE = os.path.join(
 # --------------------------------------------------------------------
 
 BAD_SUBJS = {
-    99: "Add new Bad subjs like this (this is an example)",
+    14: "bad performance, see 00_find_bad_subs.py",
+    31: "bad performance, see 00_find_bad_subs.py",
 }
-
 # originally, subjects from 1 to 33
 SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))
 
