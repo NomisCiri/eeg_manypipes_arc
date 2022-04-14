@@ -2,36 +2,76 @@
 
 based on either sensitvity index d'
 or binomial test against chance.
-the latter works bc of a clever task design
-To reproduce, you have to delete the bad subs from config.
+To reproduce, delete bad subs from config.
 """
 # %%
 # Imports
 import pandas as pd
-from scipy.stats import binom_test
+from scipy import stats
 
 from config import FPATH_DS, SUBJS
-
-from utils import calculate_dPrime, get_behavioral_data
 
 # %%
 # Filepaths and settings
 rejection_threshold = 0.6  # dprime threshold used to exclude participants
 fpath_ds = FPATH_DS
-overwrite = False
+overwrite = True
 fpath_der = fpath_ds / "derivatives"
 
 # %%
+# define functions
 
-subex = []
-dPrimeEx = []
 
-subexBino = []
-binoEx = []
-# based on d'
+def calculate_dPrime(behavior_dat):
+    """Calculate the sensitvity index for a given subject.
+
+    Does the following:
+        - Calculates d'
+
+    Parameters
+    ----------
+    behavior_dat : pd.DataFrame
+        metadata of a given subject.
+
+    Returns
+    -------
+    dprime : float
+        the sensitvity index d'.
+    """
+    # hit rate
+    hit_P = len(behavior_dat.query("behavior=='hit'")) / (
+        len(behavior_dat.query("behavior=='hit'"))
+        + len(behavior_dat.query("behavior=='miss'"))
+    )
+    # false alarm rate
+    fa_P = len(behavior_dat.query("behavior=='falsealarm'")) / (
+        len(behavior_dat.query("behavior=='falsealarm'"))
+        + len(behavior_dat.query("behavior=='correctreject'"))
+    )
+
+    # z-scores
+    hit_Z = stats.norm.ppf(hit_P)
+    fa_Z = stats.norm.ppf(fa_P)
+
+    # d-prime
+    dPrime = hit_Z - fa_Z
+
+    return dPrime
+
+
+# %%
+# loads all subjects and checks whether
+# should be excluded based on poor performance
+
+sub_ex = []
+dPrime = []
+p_val = []
+sub_ex_d_bino = []
+
 for sub in SUBJS:
     fpath_set = fpath_ds / "sourcedata" / "events" / f"EMP{sub:02}_events.csv"
-    behavior_dat = get_behavioral_data(fpath_set)
+    behavior_dat = pd.read_csv(fpath_set)
+    # check if correct response was given
     behavior_dat = behavior_dat.assign(
         right_wrong=[
             1 if behav == "correctreject" or behav == "hit" else 0
@@ -39,30 +79,37 @@ for sub in SUBJS:
         ]
     )
 
-    dPrime = calculate_dPrime(behavior_dat)  # get dprime
-    p_val = binom_test(
-        sum(behavior_dat["right_wrong"]),
-        len(behavior_dat["right_wrong"]),
-        p=0.5,
-        alternative="greater",
-    )  # get binmoial test
+    dPrime.append(calculate_dPrime(behavior_dat))
 
-    # collect subjects to exclude based on d'
-    if dPrime < rejectionThreshold:
-        subex.append(sub)
-        dPrimeEx.append(dPrime)
+    p_val.append(
+        stats.binom_test(
+            sum(behavior_dat["right_wrong"]),
+            len(behavior_dat["right_wrong"]),
+            p=0.5,
+            alternative="greater",
+        )
+    )
 
-    # collect subjects to exclude based on binomial test against chance
-    if p_val > 0.001:
-        subexBino.append(sub)
-        binoEx.append(p_val)
+    # check based on which criterion we would exclude subs
+    if (dPrime[-1] < rejection_threshold) & (p_val[-1] > 0.001):
+        # rejected based on both, binomial test and dprime
+        sub_ex_d_bino.append(3)
+    elif (dPrime[-1] < rejection_threshold) & (p_val[-1] < 0.001):
+        # rejected based on binomial test only
+        sub_ex_d_bino.append(2)
+    elif (dPrime[-1] > rejection_threshold) & (p_val[-1] > 0.001):
+        # rejected based on dprime only
+        sub_ex_d_bino.append(1)
+    else:
+        sub_ex_d_bino.append(0)
+
+    sub_ex.append(sub)
 # write excluded ppts with their dprimes int df
-exDat = {"subjectNumber": subex, "dPrime": dPrimeEx}
-exdf = pd.DataFrame(data=exDat)
-exdf.to_json(fpath_der / "bad_subs_dPrime.json")
-
-exDatBino = {"subjectNumber": subexBino, "p_val": binoEx}
-exdfBino = pd.DataFrame(data=exDatBino)
-exdfBino.to_json(fpath_der / "bad_subs_binomial.json")
-
-# %%
+ex_dat = {
+    "subject_number": sub_ex,
+    "dPrime": dPrime,
+    "p_val": p_val,
+    "ex_bi1_dp2_both3": sub_ex_d_bino,
+}
+ex_df = pd.DataFrame(data=ex_dat)
+ex_df.to_csv(fpath_der / "bad_subs_dPrime.tsv", sep="\t", na_rep="n/a", index=False)

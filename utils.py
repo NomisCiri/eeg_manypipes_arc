@@ -5,8 +5,6 @@ from pathlib import Path
 import click
 import mne
 from mne.utils import logger
-from pandas import read_csv
-from scipy import stats
 
 
 @click.command()
@@ -74,68 +72,3 @@ def get_raw_data(fpath_set):
     assert len(raw.annotations) == 1200, err_msg
 
     return raw
-
-
-def get_behavioral_data(fpath_set):
-    """Read behavioral data to DataFrame.
-
-    Does the following:
-        - Reads in behavioral data as csv
-        - Checks if data has the expeceted length
-
-    Parameters
-    ----------
-    fpath_set : string
-        Absolute path to the csv file containing metadata
-
-    Returns
-    -------
-    metadata : pd.DataFrame
-        A pandas DataFrame containing metadata in columns and trials in rows.
-    """
-    #
-    metadata = read_csv(fpath_set)
-
-    # Set some known metadata
-    # Sanity check we have the expected number of events
-    err_msg = f"    >>> {len(metadata)} != the expected 1200"
-    assert len(metadata) == 1200, err_msg
-
-    return metadata
-
-
-def calculate_dPrime(behavior_dat):
-    """Calculate the sensitvity index for a given subject.
-
-    Does the following:
-        - Calculates d'
-
-    Parameters
-    ----------
-    behavior_dat : pd.DataFrame
-        metadata of a given subject.
-
-    Returns
-    -------
-    dprime : float
-        the sensitvity index d'.
-    """
-    # hit rate
-    hitP = len(behavior_dat.query("behavior=='hit'")) / (
-        len(behavior_dat.query("behavior=='hit'"))
-        + len(behavior_dat.query("behavior=='miss'"))
-    )
-    # false alarm rate
-    faP = len(behavior_dat.query("behavior=='falsealarm'")) / (
-        len(behavior_dat.query("behavior=='falsealarm'"))
-        + len(behavior_dat.query("behavior=='correctreject'"))
-    )
-
-    # z-scores
-    hitZ = stats.norm.ppf(hitP)
-    faZ = stats.norm.ppf(faP)
-
-    # d-prime
-    dPrime = hitZ - faZ
-
-    return dPrime
