@@ -2,14 +2,13 @@
 
 based on either sensitvity index d'
 or binomial test against chance.
-To reproduce, delete bad subs from config.
 """
 # %%
 # Imports
 import pandas as pd
 from scipy import stats
 
-from config import FPATH_DS, SUBJS
+from config import FPATH_DS
 
 # %%
 # Filepaths and settings
@@ -68,7 +67,7 @@ dPrime = []
 p_val = []
 sub_ex_d_bino = []
 
-for sub in SUBJS:
+for sub in range(1, 34):
     fpath_set = fpath_ds / "sourcedata" / "events" / f"EMP{sub:02}_events.csv"
     behavior_dat = pd.read_csv(fpath_set)
     # check if correct response was given
