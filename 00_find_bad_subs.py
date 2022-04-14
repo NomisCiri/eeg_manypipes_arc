@@ -12,8 +12,6 @@ from scipy.stats import binom_test
 
 from config import FPATH_DS, SUBJS
 
-# %%
-# settings
 from utils import calculate_dPrime, get_behavioral_data
 
 # %%
