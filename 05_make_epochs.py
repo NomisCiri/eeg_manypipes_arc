@@ -1,9 +1,8 @@
-"""Filter data, make epochs, downsample.
+"""Filter data, make epochs.
 
 1. Load ICA cleaned data
 1. Filter data (lowpass, highpass)
 1. Make epochs
-1. Downsample
 1. Save
 
 """
@@ -15,7 +14,7 @@ from pathlib import Path
 
 import mne
 import pandas as pd
-from mne.utils import event2id, logger
+from mne.utils import logger
 
 from config import (
     FNAME_EPOCHS_TEMPLATE,
@@ -24,11 +23,12 @@ from config import (
     FPATH_DS,
     HIGH_CUTOFF,
     LOW_CUTOFF,
+    NOTCH_FREQS,
     OVERWRITE_MSG,
     PATH_NOT_FOUND_MSG,
     SUBJS,
 )
-from utils import parse_overwrite
+from utils import event2id, parse_overwrite
 
 # %%
 # Filepaths and settings
@@ -37,7 +37,7 @@ sub = 1
 fpath_ds = FPATH_DS
 overwrite = True
 
-t_min_max_epochs = (-1.0, 1.0)
+t_min_max_epochs = (-1.5, 2.5)
 
 
 # %%
@@ -77,9 +77,10 @@ raw = mne.io.read_raw_fif(fpath_fif)
 raw.load_data()
 
 # %%
-# Filter
+# Filter (highpass, lowpass, notch)
 raw = raw.filter(l_freq=LOW_CUTOFF, h_freq=None)
 raw = raw.filter(l_freq=None, h_freq=HIGH_CUTOFF)
+raw = raw.notch_filter(freqs=NOTCH_FREQS)
 
 # %%
 # Make epochs
@@ -102,13 +103,21 @@ fname_events = Path(FNAME_EVENTS_TEMPLATE.format(sub=sub))
 metadata = pd.read_csv(fname_events, sep=",")
 assert metadata.shape[0] == 1200
 
-# form epochs
+# form epochs (only save EEG channels)
 tmin, tmax = t_min_max_epochs
 epochs = mne.Epochs(
-    raw, events, event_id=this_event_id, tmin=tmin, tmax=tmax, metadata=metadata
+    raw,
+    events,
+    event_id=this_event_id,
+    tmin=tmin,
+    tmax=tmax,
+    metadata=metadata,
+    baseline=None,
+    picks=["eeg"],
 )
 
 # %%
-
+# Save
+epochs.save(fname_epochs, overwrite=overwrite)
 
 # %%

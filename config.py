@@ -83,8 +83,7 @@ PATH_NOT_FOUND_MSG = "\npath not found\n\n>>> {}\n"
 # Filtering
 LOW_CUTOFF = 0.1
 HIGH_CUTOFF = 40
-
-DOWNSAMPLE_FREQ = 256
+NOTCH_FREQS = [50, 100]
 
 # Events
 TRIGGER_CODES = [
