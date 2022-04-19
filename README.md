@@ -51,6 +51,36 @@ There is merely a symbolic link to a remote location (GIN).
 Furthermore, the entire EEG data (even after `get`) is "read only";
 if you need to edit the files (not recommended), you can run `datalad unlock *`.
 
+## Screen the raw data
+
+To screen some subject's raw data, follow these steps:
+
+1. Activate the `emp` environment
+1. Start `ipython` from the command line (from the root of this repository)
+1. Paste the following code snippets, adjusting the `sub` variable to your liking
+1. (optional) Uncomment and adjust the "filter" comment to filter the data
+
+Note that this assumes you have already downloaded the data and added the path
+to your downloaded data to `config.py`.
+
+```python
+import mne
+from config import FPATH_DS
+from utils import get_raw_data
+sub = 1
+fpath_set = FPATH_DS / "sourcedata" / "eeg_eeglab" / f"EMP{sub:02}.set"
+raw = get_raw_data(fpath_set)
+#raw.filter(l_freq=0.1, h_freq=40)
+raw.plot(
+    block=True,
+    use_opengl=False,
+    n_channels=len(raw.ch_names),
+    bad_color="red",
+    duration=20.0,
+    clipping=None,
+)
+```
+
 ## Continuous integration
 
 Under `.github/workflows/run_analysis.yml` we have specified a test workflow that may be
