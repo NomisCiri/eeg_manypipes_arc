@@ -16,6 +16,7 @@ dependencies:
   - h5py
   - pymatreader
   - pyprep
+  - autoreject
   - ipython
   - ipykernel
   - pre-commit

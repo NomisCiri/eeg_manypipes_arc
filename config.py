@@ -66,6 +66,10 @@ FNAME_REPORT_ICA_TEMPLATE = os.path.join(
 FNAME_EPOCHS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_epo.fif.gz"
 )
+# epoched anc CLEANED data
+FNAME_EPO_CLEAN_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_clean-epo.fif.gz"
+)
 
 # Constants
 # --------------------------------------------------------------------
