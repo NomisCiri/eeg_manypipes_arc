@@ -14,6 +14,7 @@ from config import (
     FPATH_DS,
     OVERWRITE_MSG,
     PATH_NOT_FOUND_MSG,
+    REF_CHANNEL,
     SUBJS,
 )
 from utils import get_raw_data, parse_overwrite
@@ -70,7 +71,7 @@ nc.find_all_bads()
 bads_dict = nc.get_bads(as_dict=True)
 
 # sanity check: POz was a reference channel, should be perfectly flat
-assert "POz" in bads_dict["bad_by_flat"]
+assert REF_CHANNEL in bads_dict["bad_by_flat"]
 
 # %%
 # Save the outputs under derivatives

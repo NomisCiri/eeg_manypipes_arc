@@ -114,7 +114,9 @@ epochs = mne.Epochs(
     metadata=metadata,
     baseline=None,
     picks=["eeg"],
+    preload=True,
 )
+assert len(epochs) == 1200
 
 # %%
 # Save

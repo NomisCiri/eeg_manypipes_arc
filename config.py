@@ -66,10 +66,24 @@ FNAME_REPORT_ICA_TEMPLATE = os.path.join(
 FNAME_EPOCHS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_epo.fif.gz"
 )
-# epoched anc CLEANED data
+# epoched and CLEANED data
 FNAME_EPO_CLEAN_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_clean-epo.fif.gz"
 )
+# Autoreject files
+FNAME_AR_OBJECT_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_autoreject-obj.hdf5"
+)
+FNAME_AR_REJECT_LOG_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_reject-log.npz"
+)
+FNAME_AR_PLOT_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_reject-plot.pdf"
+)
+FNAME_BAD_EPOS_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-epochs.json"
+)
+
 
 # Constants
 # --------------------------------------------------------------------
@@ -96,3 +110,6 @@ TRIGGER_CODES = [
     {1: "hit", 2: "miss", 3: "false_alarm", 4: "correct_rej", 9: "na"},
     {0: "sub_remembered", 1: "sub_forgotten", 9: "na"},
 ]
+
+# This channel is flat
+REF_CHANNEL = "POz"

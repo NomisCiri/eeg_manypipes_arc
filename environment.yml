@@ -25,5 +25,6 @@ dependencies:
   - flake8
   - flake8-docstrings
   - click
+  - psutil
   - pip:
     - datalad
