@@ -1,21 +1,31 @@
-"""finds bad subjects and saves them as json.
+"""Find subjects who did not perform well in the task.
 
-based on either sensitvity index d'
-or binomial test against chance.
+Use signal detection theory to calculate sensitvity index d' (D prime),
+and additionally calculate a binomial test of accuracy data against chance
+level.
+
+Based on these two indices, decide whether to exclude subjects from further
+analysis.
 """
 # %%
 # Imports
 import pandas as pd
 from scipy import stats
 
-from config import FPATH_DS
+from config import FPATH_DS, OVERWRITE_MSG
 
 # %%
 # Filepaths and settings
 rejection_threshold = 0.6  # dprime threshold used to exclude participants
 fpath_ds = FPATH_DS
 overwrite = True
-fpath_der = fpath_ds / "derivatives"
+
+# %%
+# Check overwrite
+fname_bad_subjs = fpath_ds / "derivatives" / "bad_subjs.tsv"
+if fname_bad_subjs.exists() and not overwrite:
+    raise RuntimeError(OVERWRITE_MSG.format(fname_bad_subjs))
+
 
 # %%
 # define functions
@@ -59,57 +69,58 @@ def calculate_dPrime(behavior_dat):
 
 
 # %%
-# loads all subjects and checks whether
-# should be excluded based on poor performance
+# Loads all subjs and check whether they should be excluded based on poor performance
 
-sub_ex = []
-dPrime = []
-p_val = []
-sub_ex_d_bino = []
+subjs = []
+dPrimes = []
+p_vals = []
+subj_exclude_dprime = []
+subj_exclude_binom = []
 
 for sub in range(1, 34):
-    fpath_set = fpath_ds / "sourcedata" / "events" / f"EMP{sub:02}_events.csv"
-    behavior_dat = pd.read_csv(fpath_set)
+    fpath_csv = fpath_ds / "sourcedata" / "events" / f"EMP{sub:02}_events.csv"
+    df_beh = pd.read_csv(fpath_csv)
     # check if correct response was given
-    behavior_dat = behavior_dat.assign(
+    df_beh = df_beh.assign(
         right_wrong=[
             1 if behav == "correctreject" or behav == "hit" else 0
-            for behav in behavior_dat["behavior"]
+            for behav in df_beh["behavior"]
         ]
     )
 
-    dPrime.append(calculate_dPrime(behavior_dat))
+    dPrimes.append(calculate_dPrime(df_beh))
 
-    p_val.append(
+    p_vals.append(
         stats.binom_test(
-            sum(behavior_dat["right_wrong"]),
-            len(behavior_dat["right_wrong"]),
+            sum(df_beh["right_wrong"]),
+            len(df_beh["right_wrong"]),
             p=0.5,
             alternative="greater",
         )
     )
 
-    # check based on which criterion we would exclude subs
-    if (dPrime[-1] < rejection_threshold) & (p_val[-1] > 0.001):
-        # rejected based on both, binomial test and dprime
-        sub_ex_d_bino.append(3)
-    elif (dPrime[-1] < rejection_threshold) & (p_val[-1] < 0.001):
-        # rejected based on binomial test only
-        sub_ex_d_bino.append(2)
-    elif (dPrime[-1] > rejection_threshold) & (p_val[-1] > 0.001):
-        # rejected based on dprime only
-        sub_ex_d_bino.append(1)
+    # check whether to exclude subj
+    if dPrimes[-1] < rejection_threshold:
+        # exclude: dprime is too low
+        subj_exclude_dprime.append(1)
     else:
-        # not rejected
-        sub_ex_d_bino.append(0)
+        subj_exclude_dprime.append(0)
 
-    sub_ex.append(sub)
-# write excluded ppts with their dprimes int df
-ex_dat = {
-    "subject_number": sub_ex,
-    "dPrime": dPrime,
-    "p_val": p_val,
-    "ex_bi1_dp2_both3": sub_ex_d_bino,
+    if p_vals[-1] > 0.001:
+        # exclude: performance not significantly different from chance level
+        subj_exclude_binom.append(1)
+    else:
+        subj_exclude_binom.append(0)
+
+    subjs.append(sub)
+
+# write subj data into df
+data = {
+    "subject_id": subjs,
+    "dPrime": dPrimes,
+    "pval_binom": p_vals,
+    "exclude_based_on_dprime": subj_exclude_dprime,
+    "exclude_based_on_binom": subj_exclude_binom,
 }
-ex_df = pd.DataFrame(data=ex_dat)
-ex_df.to_csv(fpath_der / "bad_subs_dPrime.tsv", sep="\t", na_rep="n/a", index=False)
+ex_df = pd.DataFrame(data=data)
+ex_df.to_csv(fname_bad_subjs, sep="\t", na_rep="n/a", index=False)
