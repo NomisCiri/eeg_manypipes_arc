@@ -113,7 +113,7 @@ if len(bads_flat) > 0 and fname_bads.exists():
 
     file_changed = False
     for bad in bads_flat:
-        if bad not in bads_dict:
+        if bad not in bads_dict["bad_by_flat"]:
             bads_dict["bad_by_flat"].append(bad)
             file_changed = True
 

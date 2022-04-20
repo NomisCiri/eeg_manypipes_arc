@@ -85,3 +85,17 @@ raw.plot(
 
 Under `.github/workflows/run_analysis.yml` we have specified a test workflow that may be
 helpful for you to inspect.
+
+
+## Run several subjs after one another
+
+Use something like this from a command line prompt:
+
+```shell
+for i in {1..33}
+do
+    python -u 01_find_bads.py \
+        --sub=$i \
+        --overwrite=True
+done
+```

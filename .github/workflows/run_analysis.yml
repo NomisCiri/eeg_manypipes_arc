@@ -140,5 +140,7 @@ jobs:
         python 05_make_epochs.py --sub=1 --overwrite=True
 
     - name: Run 06_run_autoreject
+      # skip this CI step in windows, because it takes too much RAM for the runner
+      if: "matrix.os != 'windows-latest'"
       run: |
         python 06_run_autoreject.py --sub=1 --overwrite=True
