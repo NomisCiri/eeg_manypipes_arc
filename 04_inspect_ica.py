@@ -252,7 +252,10 @@ raw_clean = ica.apply(inst=raw_copy)
 
 # %%
 # Visually screen data for absence of blinks and saccades
-raw_clean.plot(
+# first remove line noise (on a copy)
+raw_clean_copy = raw_clean.copy()
+raw_clean_copy.notch_filter([50, 100])
+raw_clean_copy.plot(
     block=True,
     use_opengl=False,
     n_channels=len(raw_clean.ch_names),
