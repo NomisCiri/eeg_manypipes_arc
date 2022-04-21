@@ -110,6 +110,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
+        datalad get derivatives/EMP01/*
         datalad unlock derivatives/EMP01/*
 
     - name: Run 00_find_bad_subjs
