@@ -142,7 +142,8 @@ jobs:
         python 05_make_epochs.py --sub=1 --overwrite=True
 
     - name: Run 06_run_autoreject
-      # skip this CI step in windows, because it takes too much RAM for the runner
-      if: "matrix.os != 'windows-latest'"
+      # run this CI step only in linux, others fail due to low RAM, or long exec time
+      # maybe due to https://github.com/actions/runner/issues/884 ?
+      if: "matrix.os == 'ubuntu-latest'"
       run: |
         python 06_run_autoreject.py --sub=1 --overwrite=True
