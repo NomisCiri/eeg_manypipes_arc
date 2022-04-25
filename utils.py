@@ -6,15 +6,19 @@ import click
 import mne
 from mne.utils import logger
 
+from config import TRIGGER_CODES
+
 
 @click.command()
 @click.option("--sub", type=int, help="Subject number")
 @click.option("--fpath_ds", type=str, help="Data location")
 @click.option("--overwrite", default=False, type=bool, help="Overwrite?")
+@click.option("--interactive", default=False, type=bool, help="Interactive?")
 def get_inputs(
     sub,
     fpath_ds,
     overwrite,
+    interactive,
 ):
     """Parse inputs in case script is run from command line.
 
@@ -30,6 +34,7 @@ def get_inputs(
         sub=sub,
         fpath_ds=fpath_ds,
         overwrite=overwrite,
+        interactive=interactive,
     )
 
     return inputs
@@ -62,13 +67,25 @@ def get_raw_data(fpath_set):
         warnings.filterwarnings(
             "ignore", category=RuntimeWarning, message="Not setting positions of 2 .*"
         )
-    raw = mne.io.read_raw_eeglab(fpath_set, eog=["VEOG", "HEOG"])
+        raw = mne.io.read_raw_eeglab(fpath_set, eog=["VEOG", "HEOG"])
 
     # Set some known metadata
     raw.info["line_freq"] = 50
+
+    # IO1 and IO2 are also EOG channels: very close to the eyes
+    raw = raw.set_channel_types({"IO1": "eog", "IO2": "eog"})
 
     # Sanity check we have the expected number of events
     err_msg = f"    >>> {len(raw.annotations)} != the expected 1200"
     assert len(raw.annotations) == 1200, err_msg
 
     return raw
+
+
+def event2id(event_str):
+    """Convert a 4-digit string (an event) to a human readable description."""
+    event_id = []
+    for event_factor, trigger_code in zip(event_str, TRIGGER_CODES):
+        event_id.append(trigger_code[int(event_factor)])
+
+    return "/".join(event_id)

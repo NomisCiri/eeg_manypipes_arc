@@ -42,11 +42,11 @@ jobs:
       uses: actions/cache@v3
       env:
         # Increase this value to reset cache if environment.yml has not changed
-        CACHE_NUMBER: 0
+        CACHE_NUMBER: 1
       with:
         path: |
           ~/conda_pkgs_dir
-        key: v-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+        key: v-${{ env.CACHE_NUMBER }}-${{ matrix.os }}-${{ hashFiles('environment.yml') }}
 
 
     - name: Set up Python ${{ matrix.python-version }}
@@ -110,13 +110,40 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/eeg_manypipes_arc
         datalad get sourcedata/eeg_eeglab/EMP01*
+        datalad get derivatives/EMP01/*
+        datalad unlock derivatives/EMP01/*
 
-    - name: Run 00_find_bad_subs
+    - name: Run 00_find_bad_subjs
       run: |
-        python 00_find_bad_subs.py
+        python 00_find_bad_subjs.py
 
     - name: Run 01_find_bads
       # skip this CI step in windows, because it takes too much RAM for the runner
       if: "matrix.os != 'windows-latest'"
       run: |
         python 01_find_bads.py --sub=1 --overwrite=True
+
+    - name: Run 02_mark_bad_segments
+      # skip this CI step in windows, because it takes too much RAM for the runner
+      if: "matrix.os != 'windows-latest'"
+      run: |
+        python 02_mark_bad_segments.py --sub=1 --overwrite=True
+
+    - name: Run 03_run_ica
+      run: |
+        python 03_run_ica.py --sub=1 --overwrite=True
+
+    - name: Run 04_inspect_ica
+      run: |
+        python 04_inspect_ica.py --sub=1 --overwrite=True
+
+    - name: Run 05_make_epochs
+      run: |
+        python 05_make_epochs.py --sub=1 --overwrite=True
+
+    - name: Run 06_run_autoreject
+      # run this CI step only in linux, others fail due to low RAM, or long exec time
+      # maybe due to https://github.com/actions/runner/issues/884 ?
+      if: "matrix.os == 'ubuntu-latest'"
+      run: |
+        python 06_run_autoreject.py --sub=1 --overwrite=True
