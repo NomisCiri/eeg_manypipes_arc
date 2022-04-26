@@ -62,6 +62,22 @@ FNAME_ICA_RAW_TEMPLATE = os.path.join(
 FNAME_REPORT_ICA_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_report-ica.html"
 )
+# ICA solution notch filtered
+FNAME_ICA_NOCTH_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_ica_notch.fif.gz"
+)
+# ICA components to exclude notch filterd
+FNAME_COMPONENTS_NOCTH_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-components_notch.json"
+)
+# raw data after ICA cleaning notch filtered
+FNAME_ICA_NOCTH_RAW_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_ica_notch-raw.fif.gz"
+)
+# report for ICA notch filtered
+FNAME_REPORT_ICA_NOCTH_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_report-ica_notch.html"
+)
 # epoched data
 FNAME_EPOCHS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_epo.fif.gz"
@@ -83,8 +99,6 @@ FNAME_AR_PLOT_TEMPLATE = os.path.join(
 FNAME_BAD_EPOS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-epochs.json"
 )
-
-
 # Constants
 # --------------------------------------------------------------------
 
