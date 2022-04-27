@@ -26,9 +26,17 @@ ch_fronto_central = ["FCz", "FC1", "FC2", "FC3", "FC4", "Fz"]
 ch_posterior = ["Poz", "Po3", "Po4", "Oz", "O1", "O2", "Po7" "Po8"]
 tmin = 300
 tmax = 500
+# List of all trigger combinations for a new image
 triggers_new = [
     list(TRIGGER_CODES[0].keys()),
     [0],
+    list(TRIGGER_CODES[2].keys()),
+    list(TRIGGER_CODES[3].keys()),
+]
+# List of all trigger combinations for an old image
+triggers_old = [
+    list(TRIGGER_CODES[0].keys()),
+    [1],
     list(TRIGGER_CODES[2].keys()),
     list(TRIGGER_CODES[3].keys()),
 ]
