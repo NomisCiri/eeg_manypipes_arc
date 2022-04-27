@@ -47,10 +47,15 @@ triggers_old_list = list(
     )
 )
 
-triggers_old = list(itertools.product(triggers_old_list))
 # %%
 # Makes triggercodes for subsetting the epochs
+triggers_new = [
+    "".join(map(str, triggers_new_list[i])) for i in range(0, len(triggers_new_list))
+]
 
+triggers_old = [
+    "".join(map(str, triggers_old_list[i])) for i in range(0, len(triggers_old_list))
+]
 # %%
 # Reads in all epochs
 epochs = [
