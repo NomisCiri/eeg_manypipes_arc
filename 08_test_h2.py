@@ -71,17 +71,23 @@ epochs = [
     )
     for sub in SUBJS
 ]
-
 # %%
 #  Keep only existing subs
 epochs_complete = list(filter(None.__ne__, epochs))
-
 # %%
 # Get a list of epochs in the desired timerange and with the desired channels
-
+# old images
 epochs_old = list(
+    [
+        x[triggers_old].crop(toi_min, toi_max).pick_channels(ch_fronto_central)
+        for x in epochs_complete
+    ]
+)
+# new images
+epochs_new = list(
     [
         x[triggers_new].crop(toi_min, toi_max).pick_channels(ch_fronto_central)
         for x in epochs_complete
     ]
 )
+# %%
