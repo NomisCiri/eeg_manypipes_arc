@@ -26,8 +26,8 @@ fpath_ds = FPATH_DS
 overwrite = True
 ch_fronto_central = ["FCz", "FC1", "FC2", "FC3", "FC4", "Fz"]
 ch_posterior = ["Poz", "Po3", "Po4", "Oz", "O1", "O2", "Po7" "Po8"]
-tmin = 300
-tmax = 500
+toi_min = 0.3
+toi_max = 0.5
 # List of all trigger combinations for a new image
 triggers_new_list = list(
     itertools.product(
@@ -71,3 +71,17 @@ epochs = [
     )
     for sub in SUBJS
 ]
+
+# %%
+#  Keep only existing subs
+epochs_complete = list(filter(None.__ne__, epochs))
+
+# %%
+# Get a list of epochs in the desired timerange and with the desired channels
+
+epochs_old = list(
+    [
+        x[triggers_new].crop(toi_min, toi_max).pick_channels(ch_fronto_central)
+        for x in epochs_complete
+    ]
+)
