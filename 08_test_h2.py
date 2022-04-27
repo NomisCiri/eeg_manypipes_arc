@@ -31,26 +31,26 @@ tmax = 500
 # List of all trigger combinations for a new image
 triggers_new_list = list(
     itertools.product(
-        list(TRIGGER_CODES[0].keys()),
-        [0],
-        list(TRIGGER_CODES[2].keys()),
-        list(TRIGGER_CODES[3].keys()),
+        list(TRIGGER_CODES[0].values()),
+        ["new"],
+        list(TRIGGER_CODES[2].values()),
+        list(TRIGGER_CODES[3].values()),
     )
 )
 # List of all trigger combinations for an old image
 triggers_old_list = list(
     itertools.product(
-        list(TRIGGER_CODES[0].keys()),
-        [1],
-        list(TRIGGER_CODES[2].keys()),
-        list(TRIGGER_CODES[3].keys()),
+        list(TRIGGER_CODES[0].values()),
+        ["old"],
+        list(TRIGGER_CODES[2].values()),
+        list(TRIGGER_CODES[3].values()),
     )
 )
 
 # %%
 # Makes triggercodes for subsetting the epochs
 triggers_new = [
-    "".join(map(str, triggers_new_list[i])) for i in range(0, len(triggers_new_list))
+    "/".join(map(str, triggers_new_list[i])) for i in range(0, len(triggers_new_list))
 ]
 
 triggers_old = [
