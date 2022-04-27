@@ -54,7 +54,7 @@ triggers_new = [
 ]
 
 triggers_old = [
-    "".join(map(str, triggers_old_list[i])) for i in range(0, len(triggers_old_list))
+    "/".join(map(str, triggers_old_list[i])) for i in range(0, len(triggers_old_list))
 ]
 # %%
 # Reads in all epochs
