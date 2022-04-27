@@ -165,6 +165,7 @@ evoked.plot_joint(
 )  # show difference wave
 
 # Create ROIs by checking channel labels
+# only check tois
 # Visualize the results
 toi_evoked = evoked.copy().crop(toi_min, toi_max)
 toi_evoked.plot_image(
