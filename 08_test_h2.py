@@ -9,6 +9,8 @@ c. ... on alpha power at posterior channels.
 
 """
 
+import itertools
+
 # %%
 # Imports
 import os
@@ -27,21 +29,30 @@ ch_posterior = ["Poz", "Po3", "Po4", "Oz", "O1", "O2", "Po7" "Po8"]
 tmin = 300
 tmax = 500
 # List of all trigger combinations for a new image
-triggers_new = [
-    list(TRIGGER_CODES[0].keys()),
-    [0],
-    list(TRIGGER_CODES[2].keys()),
-    list(TRIGGER_CODES[3].keys()),
-]
+triggers_new_list = list(
+    itertools.product(
+        list(TRIGGER_CODES[0].keys()),
+        [0],
+        list(TRIGGER_CODES[2].keys()),
+        list(TRIGGER_CODES[3].keys()),
+    )
+)
 # List of all trigger combinations for an old image
-triggers_old = [
-    list(TRIGGER_CODES[0].keys()),
-    [1],
-    list(TRIGGER_CODES[2].keys()),
-    list(TRIGGER_CODES[3].keys()),
-]
+triggers_old_list = list(
+    itertools.product(
+        list(TRIGGER_CODES[0].keys()),
+        [1],
+        list(TRIGGER_CODES[2].keys()),
+        list(TRIGGER_CODES[3].keys()),
+    )
+)
+
+triggers_old = list(itertools.product(triggers_old_list))
 # %%
-# reads in all epochs
+# Makes triggercodes for subsetting the epochs
+
+# %%
+# Reads in all epochs
 epochs = [
     catch(
         lambda: mne.read_epochs(
