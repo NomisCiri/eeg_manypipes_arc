@@ -6,7 +6,6 @@ vs. repeated/old images) within the time-range from 300–500 ms ...
 a. ... on EEG voltage at fronto-central channels.
 b. ... on theta power at fronto-central channels.
 c. ... on alpha power at posterior channels.
-
 """
 
 import itertools
@@ -93,7 +92,6 @@ epochs_complete = list(filter(None.__ne__, epochs))
 # required format: (n_observations (subs), time, n_vertices (channels)).
 
 # old images
-# TODO: only transpose once
 evokeds_old_list = list(
     [
         x[triggers_old]
@@ -101,11 +99,9 @@ evokeds_old_list = list(
         .pick_channels(ch_fronto_central)
         .average()
         .get_data()
-        .transpose(1, 0)
         for x in epochs_complete
     ]
 )
-evokeds_old_arr = np.stack(evokeds_old_list, axis=2).transpose(2, 0, 1)
 # new images
 evokeds_new_list = list(
     [
@@ -114,30 +110,27 @@ evokeds_new_list = list(
         .pick_channels(ch_fronto_central)
         .average()
         .get_data()
-        .transpose(1, 0)
         for x in epochs_complete
     ]
 )
-evokeds_new_arr = np.stack(evokeds_new_list, axis=2).transpose(2, 0, 1)
-# Concat data for use with cluster based permutation test
+# add list elements along array axis and reshape for permutation test
+evokeds_new_arr = np.stack(evokeds_new_list, axis=2).transpose(2, 1, 0)
+evokeds_old_arr = np.stack(evokeds_old_list, axis=2).transpose(2, 1, 0)
+# Concatanate conditions for use with cluster based permutation test
 X_h2a = [evokeds_old_arr, evokeds_new_arr]
-
-
 # %%
 # Calculate adjacency matrix between sensors from their locations
 sensor_adjacency, ch_names = find_ch_adjacency(
     epochs_complete[1].copy().pick_channels(ch_fronto_central).info, "eeg"
 )
-
 # %%
 # Calculate statistical thresholds, h2a not confirmed
-t_obs, clusters, cluster_pv, h0 = spatio_temporal_cluster_test(
-    X_h2a, tfce, n_permutations=1000
+t_obs_h2a, clusters_h2a, cluster_pv_h2a, h0_h2a = spatio_temporal_cluster_test(
+    X_h2a, tfce, n_permutations=1000, adjacency=sensor_adjacency
 )
-
-significant_points = cluster_pv.reshape(t_obs.shape).T < 0.05
+significant_points_h2a = cluster_pv_h2a.reshape(t_obs_h2a.shape).T < 0.05
 # %%
-# plot the voltage, taking the average of all subjects
+# Visualize the voltage, taking the average of all subjects
 # old images
 epochs_old_plot = list(
     [
@@ -151,19 +144,19 @@ epochs_new_plot = list(
         for epo in epochs_complete
     ]
 )
+# calculate difference wave
 evoked = mne.combine_evoked(
     [mne.grand_average(epochs_old_plot), mne.grand_average(epochs_new_plot)],
     weights=[1, -1],
-)  # calculate difference wave
-
+)
 time_unit = dict(time_unit="s")
+# show difference wave
 evoked.plot_joint(
     title="Old - New images",
     ts_args=time_unit,
     times=[0.3, 0.35, 0.4, 0.45, 0.5],
     topomap_args=time_unit,
-)  # show difference wave
-
+)
 # Create ROIs by checking channel labels
 # only check tois
 # Visualize the results
@@ -171,19 +164,18 @@ toi_evoked = evoked.copy().crop(toi_min, toi_max)
 toi_evoked.plot_image(
     colorbar=False,
     show=False,
-    mask=significant_points,
+    mask=significant_points_h2a,
     show_names="all",
     titles=None,
     **time_unit,
 )
-
 # %%
-# time frequency
-
+# Hypothesis 2b.
+# Do wavelet tranformation on whole epoch to get tfr
 tfr_new_list = list(
     [
         tfr_morlet(
-            x[triggers_new].pick_channels(ch_posterior),
+            x[triggers_new].pick_channels(ch_fronto_central),
             alpha_freqs,
             n_cycles=n_cycles,
             average=True,
@@ -191,7 +183,7 @@ tfr_new_list = list(
             n_jobs=1,
         )
         .crop(toi_min, toi_max)
-        .data.transpose(0, 2, 1)  # freq,time,channel
+        .data
         for x in epochs_complete
     ]
 )
@@ -199,7 +191,7 @@ tfr_new_list = list(
 tfr_old_list = list(
     [
         tfr_morlet(
-            x[triggers_old].pick_channels(ch_posterior),
+            x[triggers_old].pick_channels(ch_fronto_central),
             alpha_freqs,
             n_cycles=n_cycles,
             average=True,
@@ -207,9 +199,27 @@ tfr_old_list = list(
             n_jobs=1,
         )
         .crop(toi_min, toi_max)
-        .data.transpose(0, 2, 1)  # freq,time,channel
+        .data
         for x in epochs_complete
     ]
 )
+# Concatanate conditions for use with cluster based permutation test
+# required format: (n_observations (subs), time,freq, n_vertices (channels)).
+tfr_new_arr = np.stack(tfr_new_list, axis=2).transpose(2, 3, 1, 0)
+tfr_old_arr = np.stack(tfr_old_list, axis=2).transpose(2, 3, 1, 0)
+X_h2b = [tfr_old_arr, tfr_new_arr]
 
+# %%
+# Make sensor-frequency adjacancy matrix
+tf_timepoints = len(tfr_old_list[1][1, :, 1])
+tf_adjacency = mne.stats.combine_adjacency(
+    sensor_adjacency, len(alpha_freqs), tf_timepoints
+)
+
+# %%
+# Calculate statistical thresholds, h2a not confirmed
+t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = spatio_temporal_cluster_test(
+    X_h2b, tfce, n_permutations=1000, adjacency=tf_adjacency
+)
+significant_points_h2b = cluster_pv_h2b.reshape(t_obs_h2b.shape).T < 0.05
 # %%
