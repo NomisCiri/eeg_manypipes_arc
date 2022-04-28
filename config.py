@@ -62,22 +62,6 @@ FNAME_ICA_RAW_TEMPLATE = os.path.join(
 FNAME_REPORT_ICA_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_report-ica.html"
 )
-# ICA solution notch filtered
-FNAME_ICA_NOTCH_TEMPLATE = os.path.join(
-    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_ica_notch.fif.gz"
-)
-# ICA components to exclude notch filterd
-FNAME_COMPONENTS_NOTCH_TEMPLATE = os.path.join(
-    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-components_notch.json"
-)
-# raw data after ICA cleaning notch filtered
-FNAME_ICA_NOTCH_RAW_TEMPLATE = os.path.join(
-    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_ica_notch-raw.fif.gz"
-)
-# report for ICA notch filtered
-FNAME_REPORT_ICA_NOTCH_TEMPLATE = os.path.join(
-    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_report-ica_notch.html"
-)
 # epoched data
 FNAME_EPOCHS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_epo.fif.gz"
@@ -96,14 +80,16 @@ FNAME_AR_REJECT_LOG_TEMPLATE = os.path.join(
 FNAME_AR_PLOT_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_reject-plot.pdf"
 )
-
+FNAME_REPORT_HYPOTHESES_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "{h}", "{h}_report-ica.html"
+)
 # Constants
 # --------------------------------------------------------------------
 
 BAD_SUBJS = {
     14: "bad performance, see 00_find_bad_subjs.py",
     31: "bad performance, see 00_find_bad_subjs.py",
-    7: "very odd artifacts in data, see 00_inspect_raws",
+    7: "odd artifacts in data, see 00_inspect_raws",
 }
 # originally, subjects from 1 to 33
 SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))

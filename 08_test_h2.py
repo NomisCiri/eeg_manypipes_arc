@@ -13,6 +13,7 @@ import itertools
 # %%
 # Imports
 import os
+from pathlib import Path
 
 import mne
 import numpy as np
@@ -20,7 +21,13 @@ from mne.channels import find_ch_adjacency
 from mne.stats import spatio_temporal_cluster_test
 from mne.time_frequency import tfr_morlet
 
-from config import FPATH_DS, SUBJS, TRIGGER_CODES
+from config import (
+    FNAME_REPORT_HYPOTHESES_TEMPLATE,
+    FPATH_DS,
+    OVERWRITE_MSG,
+    SUBJS,
+    TRIGGER_CODES,
+)
 from utils import catch  # , parse_overwrite
 
 # %%
@@ -58,7 +65,11 @@ triggers_old_list = list(
         list(TRIGGER_CODES[3].values()),
     )
 )
-
+# %%
+# Check overwrite
+fname_report = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h2"))
+if fname_report.exists() and not overwrite:
+    raise RuntimeError(OVERWRITE_MSG.format(fname_report))
 # %%
 # Makes triggercodes for subsetting the epochs
 triggers_new = [
@@ -172,7 +183,7 @@ toi_evoked.plot_image(
 # %%
 # Hypothesis 2b.
 # Do wavelet tranformation on whole epoch to get tfr
-tfr_new_list = list(
+tfr_alpha_new_list = list(
     [
         tfr_morlet(
             x[triggers_new].pick_channels(ch_fronto_central),
@@ -188,7 +199,7 @@ tfr_new_list = list(
     ]
 )
 
-tfr_old_list = list(
+tfr_alpha_old_list = list(
     [
         tfr_morlet(
             x[triggers_old].pick_channels(ch_fronto_central),
@@ -203,19 +214,19 @@ tfr_old_list = list(
         for x in epochs_complete
     ]
 )
+# %%
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs), time,freq, n_vertices (channels)).
-tfr_new_arr = np.stack(tfr_new_list, axis=2).transpose(2, 3, 1, 0)
-tfr_old_arr = np.stack(tfr_old_list, axis=2).transpose(2, 3, 1, 0)
-X_h2b = [tfr_old_arr, tfr_new_arr]
+tfr_alpha_new_arr = np.stack(tfr_alpha_new_list, axis=2).transpose(2, 3, 1, 0)
+tfr_alpha_old_arr = np.stack(tfr_alpha_old_list, axis=2).transpose(2, 3, 1, 0)
+X_h2b = [tfr_alpha_new_arr, tfr_alpha_old_arr]
 
 # %%
 # Make sensor-frequency adjacancy matrix
-tf_timepoints = len(tfr_old_list[1][1, :, 1])
+tf_timepoints = tfr_alpha_new_arr.shape[1]
 tf_adjacency = mne.stats.combine_adjacency(
     sensor_adjacency, len(alpha_freqs), tf_timepoints
 )
-
 # %%
 # Calculate statistical thresholds, h2a not confirmed
 t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = spatio_temporal_cluster_test(
@@ -223,3 +234,51 @@ t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = spatio_temporal_cluster_test(
 )
 significant_points_h2b = cluster_pv_h2b.reshape(t_obs_h2b.shape).T < 0.05
 # %%
+# visualize results
+# %%
+# Hypothesis 2c.
+# Do wavelet tranformation on whole epoch to get tfr
+tfr_theta_new_list = list(
+    [
+        tfr_morlet(
+            x[triggers_new].pick_channels(ch_posterior),
+            theta_freqs,
+            n_cycles=n_cycles,
+            average=True,
+            return_itc=False,
+            n_jobs=1,
+        )
+        .crop(toi_min, toi_max)
+        .data
+        for x in epochs_complete
+    ]
+)
+
+tfr_theta_old_list = list(
+    [
+        tfr_morlet(
+            x[triggers_old].pick_channels(ch_posterior),
+            theta_freqs,
+            n_cycles=n_cycles,
+            average=True,
+            return_itc=False,
+            n_jobs=1,
+        )
+        .crop(toi_min, toi_max)
+        .data
+        for x in epochs_complete
+    ]
+)
+# %%
+# Concatanate conditions for use with cluster based permutation test
+# required format: (n_observations (subs), time,freq, n_vertices (channels)).
+tfr_theta_new_arr = np.stack(tfr_theta_new_list, axis=2).transpose(2, 3, 1, 0)
+tfr_theta_old_arr = np.stack(tfr_theta_old_list, axis=2).transpose(2, 3, 1, 0)
+X_h2c = [tfr_theta_new_arr, tfr_theta_old_arr]
+
+# %%
+# Calculate statistical thresholds, h2a not confirmed
+t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = spatio_temporal_cluster_test(
+    X_h2b, tfce, n_permutations=1000, adjacency=tf_adjacency
+)
+significant_points_h2b = cluster_pv_h2b.reshape(t_obs_h2b.shape).T < 0.05
