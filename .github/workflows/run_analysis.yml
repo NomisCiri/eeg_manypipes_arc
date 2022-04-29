@@ -147,3 +147,10 @@ jobs:
       if: "matrix.os == 'ubuntu-latest'"
       run: |
         python 06_run_autoreject.py --sub=1 --overwrite=True
+
+    - name: Run 08_test_h2
+      # run this CI step only in linux, others fail due to low RAM, or long exec time
+      # maybe due to https://github.com/actions/runner/issues/884 ?
+      if: "matrix.os == 'ubuntu-latest'"
+      run: |
+        python 08_test_h2.py --overwrite=True

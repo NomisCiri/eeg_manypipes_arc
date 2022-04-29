@@ -8,11 +8,13 @@ b. ... on theta power at fronto-central channels.
 c. ... on alpha power at posterior channels.
 """
 
+
 import itertools
 
 # %%
 # Imports
 import os
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -29,7 +31,7 @@ from config import (
     SUBJS,
     TRIGGER_CODES,
 )
-from utils import catch
+from utils import catch, parse_overwrite
 
 # %%
 # Path and settings
@@ -65,6 +67,20 @@ triggers_old_list = list(
         list(TRIGGER_CODES[3].values()),
     )
 )
+# %%
+# When not in an IPython session, get command line inputs
+# https://docs.python.org/3/library/sys.html#sys.ps1
+if not hasattr(sys, "ps1"):
+    defaults = dict(
+        fpath_ds=fpath_ds,
+        overwrite=overwrite,
+    )
+
+    defaults = parse_overwrite(defaults)
+
+    sub = defaults["sub"]
+    fpath_ds = defaults["fpath_ds"]
+    overwrite = defaults["overwrite"]
 # %%
 # Check overwrite
 fname_report = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h2"))
