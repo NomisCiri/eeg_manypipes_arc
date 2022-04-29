@@ -143,7 +143,7 @@ sensor_adjacency, ch_names_theta = find_ch_adjacency(
     epochs_complete[1].copy().info, "eeg"
 )
 # %%
-# Calculate statistical thresholds, h2a not confirmed
+# Calculate statistical thresholds, h3a confirmed
 t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = spatio_temporal_cluster_test(
     X_h3a, tfce, n_permutations=1000, adjacency=sensor_adjacency, n_jobs=40
 )
@@ -200,7 +200,7 @@ report.add_figure(
     image_format="PNG",
 )
 # %%
-# Hypothesis 2b.
+# Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
 tfr_hits_list = list(
     [
@@ -244,7 +244,7 @@ X_h3b = [tfr_hits_arr, tfr_misses_arr]
 tf_timepoints = tfr_hits_arr.shape[2]
 tfr_adjacency = mne.stats.combine_adjacency(len(freqs), tf_timepoints, sensor_adjacency)
 # %%
-# Calculate statistical thresholds, h2b not confirmed
+# Calculate statistical thresholds
 t_obs_h3b, clusters_h3b, cluster_pv_h3b, h0_h3b = spatio_temporal_cluster_test(
     X_h3b, tfce, n_permutations=1000, adjacency=tfr_adjacency, n_jobs=40
 )

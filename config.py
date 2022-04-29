@@ -80,6 +80,10 @@ FNAME_AR_REJECT_LOG_TEMPLATE = os.path.join(
 FNAME_AR_PLOT_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_reject-plot.pdf"
 )
+FNAME_BAD_EPOS_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-epochs.json"
+)
+# Hypotheses tests
 FNAME_REPORT_HYPOTHESES_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "{h}", "{h}_report-ica.html"
 )
