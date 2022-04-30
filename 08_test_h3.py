@@ -163,7 +163,7 @@ significant_points_h3a = cluster_pv_h3a.reshape(t_obs_h3a.shape).T < 0.05
 
 # %%
 # Visualize the voltage, taking the average of all subjects
-# old images
+# make new object so mne plotting routines can be used
 epochs_misses_plot = list([epo[triggers_misses].average() for epo in epochs_complete])
 epochs_hits_plot = list([epo[triggers_hits].average() for epo in epochs_complete])
 # calculate difference wave
@@ -214,7 +214,7 @@ report.add_figure(
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
-# If there is a cluster test, and overwrite is false, load data
+# If there is a wavelet file test, and overwrite is false, load data
 if fname_h3b_wavelet.exists() and not overwrite:
     file_wavelet = open(fname_h3b_wavelet, "rb")
     tfr_diff_list = pickle.load(file)
@@ -283,7 +283,7 @@ significant_points_diff_h3b = np.where(cluster_pv_diff_h3b < 0.05)[0]
 tfr_theta_diff = np.average(tfr_diff_arr, axis=0).transpose(1, 0, 2)
 t_obs_diff_h3b_t = t_obs_diff_h3b.transpose(1, 0, 2)
 # %%
-# make h3b figure
+# make h3b figure for every channel.
 h3b_test, axs = plt.subplots(
     nrows=len(ch_names_theta), ncols=2, figsize=(100, 20), constrained_layout=True
 )
@@ -313,7 +313,7 @@ for ch_idx in range(0, len(ch_names_theta)):
     plt.ylabel("Frequency (Hz)")
     plt.title(f"Cluster T_val difference new -old \n ({ch_names_theta[ch_idx]})")
 
-
+# add to report
 report.add_figure(
     fig=h3b_test,
     title="h2a sig",
@@ -325,6 +325,7 @@ report.add_figure(
 )
 
 # %%
+# make figure
 for i_clu, clu_idx in enumerate(significant_points_diff_h3b):
     # unpack cluster information, get unique indices
     freq_inds, time_inds, space_inds = clusters_diff_h3b[clu_idx]
