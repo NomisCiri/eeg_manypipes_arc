@@ -84,12 +84,12 @@ FNAME_BAD_EPOS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-epochs.json"
 )
 # Hypotheses tests
-FNAME_REPORT_HYPOTHESES_TEMPLATE = os.path.join(
-    str(FPATH_DS), "derivatives", "{h}", "{h}_report.html"
+FNAME_HYPOTHESES_2_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h2", "{h}")
+FNAME_HYPOTHESES_3_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h3", "{h}")
+FNAME_REPORT_HYPOTHESES_4_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "h4", "{h}"
 )
-FNAME_REPORT_CLUSTER_TEMPLATE = os.path.join(
-    str(FPATH_DS), "derivatives", "{h}", "{h}_cluster.pkl"
-)
+
 # Constants
 # --------------------------------------------------------------------
 

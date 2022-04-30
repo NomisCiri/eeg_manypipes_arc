@@ -22,12 +22,12 @@ import matplotlib.pyplot as plt
 import mne
 import numpy as np
 from mne.channels import find_ch_adjacency
-from mne.stats import spatio_temporal_cluster_1samp_test, spatio_temporal_cluster_test
+from mne.stats import spatio_temporal_cluster_1samp_test
 from mne.time_frequency import tfr_morlet
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from config import (
-    FNAME_REPORT_HYPOTHESES_TEMPLATE,
+    FNAME_HYPOTHESES_3_TEMPLATE,
     FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
@@ -39,6 +39,11 @@ from utils import catch, parse_overwrite
 # Path and settings
 fpath_ds = FPATH_DS
 overwrite = True
+fname_report = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3_report.html"))
+fname_h3a = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3a_cluster.pkl"))
+fname_h3b_wavelet = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_wavelet.pkl"))
+fname_h3b_cluster = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_cluster.pkl"))
+
 # Settings for cluster test
 tfce = dict(start=0, step=0.2)
 p_accept = 0.05
@@ -68,26 +73,6 @@ triggers_misses_list = list(
     )
 )
 # %%
-# When not in an IPython session, get command line inputs
-# https://docs.python.org/3/library/sys.html#sys.ps1
-if not hasattr(sys, "ps1"):
-    defaults = dict(
-        fpath_ds=fpath_ds,
-        overwrite=overwrite,
-    )
-
-    defaults = parse_overwrite(defaults)
-    fpath_ds = defaults["fpath_ds"]
-    overwrite = defaults["overwrite"]
-# %%
-# Check overwrite
-fname_report = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h2"))
-if fname_report.exists() and not overwrite:
-    raise RuntimeError(OVERWRITE_MSG.format(fname_report))
-# %%
-# Start a report to save figures
-report = mne.Report(title="Hypotheses 3")
-# %%
 # Makes triggercodes for subsetting the epochs
 triggers_hits = [
     "/".join(map(str, triggers_hits_list[i])) for i in range(0, len(triggers_hits_list))
@@ -96,6 +81,24 @@ triggers_misses = [
     "/".join(map(str, triggers_misses_list[i]))
     for i in range(0, len(triggers_misses_list))
 ]
+# %%
+# When not in an IPython session, get command line inputs
+# https://docs.python.org/3/library/sys.html#sys.ps1
+if not hasattr(sys, "ps1"):
+    defaults = dict(
+        fpath_ds=fpath_ds,
+        overwrite=overwrite,
+    )
+    defaults = parse_overwrite(defaults)
+    fpath_ds = defaults["fpath_ds"]
+    overwrite = defaults["overwrite"]
+# %%
+# Check overwrite
+if fname_report.exists() and not overwrite:
+    raise RuntimeError(OVERWRITE_MSG.format(fname_report))
+# %%
+# Start a report to save figures
+report = mne.Report(title="Hypotheses 3")
 # %%
 # Reads in all epochs
 epochs = [
@@ -111,30 +114,12 @@ epochs = [
     )
     for sub in SUBJS
 ]
-# %%
 #  Keep only existing subs
 epochs_complete = list(filter(None.__ne__, epochs))
-
 # %%
 # Get a list of epochs in the desired timerange and with the desired channels.
 # already put it into the format needed for permutation test
 # required format: (n_observations (subs), time, n_vertices (channels)).
-
-# old images
-evokeds_hits_list = list(
-    [
-        x[triggers_hits].crop(toi_min, toi_max).average().get_data()
-        for x in epochs_complete
-    ]
-)
-# new images
-evokeds_misses_list = list(
-    [
-        x[triggers_misses].crop(toi_min, toi_max).average().get_data()
-        for x in epochs_complete
-    ]
-)
-
 evokeds_diff_list = list(
     [
         np.subtract(
@@ -145,11 +130,8 @@ evokeds_diff_list = list(
     ]
 )
 # add list elements along array axis and reshape for permutation test
-evokeds_hits_arr = np.stack(evokeds_hits_list, axis=2).transpose(2, 1, 0)
-evokeds_misses_arr = np.stack(evokeds_misses_list, axis=2).transpose(2, 1, 0)
 evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
 # Concatanate conditions for use with cluster based permutation test
-X_h3a = [evokeds_hits_arr, evokeds_misses_arr]
 # %%
 # Calculate adjacency matrix between sensors from their locations
 sensor_adjacency, ch_names_theta = find_ch_adjacency(
@@ -158,7 +140,6 @@ sensor_adjacency, ch_names_theta = find_ch_adjacency(
 # %%
 # Calculate statistical thresholds, h3a confirmed
 # Check overwrite
-fname_h3a = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h3a_cluster"))
 # If there is a cluster test, and overwrite is false, load data
 if fname_h3a.exists() and not overwrite:
     file = open(fname_h3a, "rb")
@@ -166,8 +147,12 @@ if fname_h3a.exists() and not overwrite:
     file.close()
 # If overwriting is false compute everything again
 else:
-    clusterstats = spatio_temporal_cluster_test(
-        X_h3a, tfce, n_permutations=1000, adjacency=sensor_adjacency, n_jobs=40
+    clusterstats = spatio_temporal_cluster_1samp_test(
+        evokeds_diff_arr,
+        tfce,
+        n_permutations=1000,
+        adjacency=sensor_adjacency,
+        n_jobs=40,
     )
     file = open(fname_h3a, "wb")
     pickle.dump(clusterstats, file)
@@ -176,17 +161,6 @@ else:
 
 significant_points_h3a = cluster_pv_h3a.reshape(t_obs_h3a.shape).T < 0.05
 
-# %%
-# Calculate thresholdes on within subject difference
-(
-    t_obs_h3a_diff,
-    clusters_h3a_diff,
-    cluster_pv_h3a_diff,
-    h0_h3a_diff,
-) = spatio_temporal_cluster_1samp_test(
-    evokeds_diff_arr, tfce, n_permutations=1000, adjacency=sensor_adjacency, n_jobs=40
-)
-significant_points_h3a_diff = cluster_pv_h3a_diff.reshape(t_obs_h3a_diff.shape).T < 0.05
 # %%
 # Visualize the voltage, taking the average of all subjects
 # old images
@@ -197,7 +171,6 @@ evoked = mne.combine_evoked(
     [mne.grand_average(epochs_misses_plot), mne.grand_average(epochs_hits_plot)],
     weights=[1, -1],
 ).crop(toi_min, toi_max)
-
 time_unit = dict(time_unit="s")
 # show difference wave
 joint = evoked.plot_joint(
@@ -222,7 +195,7 @@ toi_evoked = evoked.copy().crop(toi_min, toi_max)
 h3a_test = toi_evoked.plot_image(
     colorbar=False,
     show=False,
-    mask=significant_points_h3a_diff,
+    mask=significant_points_h3a,
     show_names="all",
     titles="Significant timepoints",
     **time_unit,
@@ -241,7 +214,6 @@ report.add_figure(
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
-fname_h3b_wavelet = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h3b_wavelet"))
 # If there is a cluster test, and overwrite is false, load data
 if fname_h3b_wavelet.exists() and not overwrite:
     file_wavelet = open(fname_h3b_wavelet, "rb")
@@ -288,7 +260,6 @@ tf_timepoints = tfr_diff_arr.shape[2]
 tfr_adjacency = mne.stats.combine_adjacency(len(freqs), tf_timepoints, sensor_adjacency)
 # %%
 # do clusterstats
-fname_h3b_cluster = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h3b_cluster"))
 # If there is a cluster test filse, and overwrite is false, load data
 if fname_h3b_cluster.exists() and not overwrite:
     file_cluster = open(fname_h3b_cluster, "rb")

@@ -14,6 +14,7 @@ import itertools
 # %%
 # Imports
 import os
+import pickle
 import sys
 from pathlib import Path
 
@@ -21,11 +22,11 @@ import matplotlib.pyplot as plt
 import mne
 import numpy as np
 from mne.channels import find_ch_adjacency
-from mne.stats import spatio_temporal_cluster_test
+from mne.stats import spatio_temporal_cluster_1samp_test
 from mne.time_frequency import tfr_morlet
 
 from config import (
-    FNAME_REPORT_HYPOTHESES_TEMPLATE,
+    FNAME_HYPOTHESES_2_TEMPLATE,
     FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
@@ -37,6 +38,12 @@ from utils import catch, parse_overwrite
 # Path and settings
 fpath_ds = FPATH_DS
 overwrite = True
+fname_report = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2_report.html"))
+fname_h2a = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2a_cluster.pkl"))
+fname_h2b_wavelet = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2b_wavelet.pkl"))
+fname_h2b_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2b_cluster.pkl"))
+fname_h2c_wavelet = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_wavelet.pkl"))
+fname_h2c_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_cluster.pkl"))
 # Settings for cluster test
 tfce = dict(start=0, step=0.2)
 p_accept = 0.05
@@ -80,7 +87,7 @@ if not hasattr(sys, "ps1"):
     overwrite = defaults["overwrite"]
 # %%
 # Check overwrite
-fname_report = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h2"))
+fname_report = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2"))
 if fname_report.exists() and not overwrite:
     raise RuntimeError(OVERWRITE_MSG.format(fname_report))
 # %%
@@ -116,45 +123,46 @@ epochs_complete = list(filter(None.__ne__, epochs))
 # Get a list of epochs in the desired timerange and with the desired channels.
 # already put it into the format needed for permutation test
 # required format: (n_observations (subs), time, n_vertices (channels)).
-
-# old images
-evokeds_old_list = list(
+evokeds_diff_list = list(
     [
-        x[triggers_old]
-        .crop(toi_min, toi_max)
-        .pick_channels(ch_fronto_central)
-        .average()
-        .get_data()
-        for x in epochs_complete
-    ]
-)
-# new images
-evokeds_new_list = list(
-    [
-        x[triggers_new]
-        .crop(toi_min, toi_max)
-        .pick_channels(ch_fronto_central)
-        .average()
-        .get_data()
+        np.subtract(
+            x[triggers_old].crop(toi_min, toi_max).average().get_data(),
+            x[triggers_new].crop(toi_min, toi_max).average().get_data(),
+        )
         for x in epochs_complete
     ]
 )
 # add list elements along array axis and reshape for permutation test
-evokeds_new_arr = np.stack(evokeds_new_list, axis=2).transpose(2, 1, 0)
-evokeds_old_arr = np.stack(evokeds_old_list, axis=2).transpose(2, 1, 0)
+evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
 # Concatanate conditions for use with cluster based permutation test
-X_h2a = [evokeds_old_arr, evokeds_new_arr]
 # %%
 # Calculate adjacency matrix between sensors from their locations
 sensor_adjacency, ch_names_theta = find_ch_adjacency(
     epochs_complete[1].copy().pick_channels(ch_fronto_central).info, "eeg"
 )
 # %%
-# Calculate statistical thresholds, h2a not confirmed
-t_obs_h2a, clusters_h2a, cluster_pv_h2a, h0_h2a = spatio_temporal_cluster_test(
-    X_h2a, tfce, n_permutations=1000, adjacency=sensor_adjacency
-)
-significant_points_h2a = cluster_pv_h2a.reshape(t_obs_h2a.shape).T < 0.05
+# Calculate statistical thresholds, h3a confirmed
+# Check overwrite
+# If there is a cluster test, and overwrite is false, load data
+if fname_h2a.exists() and not overwrite:
+    file = open(fname_h2a, "rb")
+    clusterstats = pickle.load(file)
+    file.close()
+# If overwriting is false compute everything again
+else:
+    clusterstats = spatio_temporal_cluster_1samp_test(
+        evokeds_diff_arr,
+        tfce,
+        n_permutations=1000,
+        adjacency=sensor_adjacency,
+        n_jobs=40,
+    )
+    file = open(fname_h2a, "wb")
+    pickle.dump(clusterstats, file)
+    file.close()
+    t_obs_h2a, clusters_h2a, cluster_pv_h2a, h0_h2a = clusterstats
+
+significant_points_h2a = cluster_pv_h2a.reshape(t_obs_h2a.shape).T < p_accept
 # %%
 # Visualize the voltage, taking the average of all subjects
 # old images
@@ -215,60 +223,71 @@ report.add_figure(
 # %%
 # Hypothesis 2b.
 # Do wavelet tranformation on whole epoch to get tfr
-tfr_theta_new_list = list(
-    [
-        tfr_morlet(
-            x[triggers_new].pick_channels(ch_fronto_central),
-            theta_freqs,
-            n_cycles=n_cycles,
-            average=True,
-            return_itc=False,
-            n_jobs=1,
-        )
-        .crop(toi_min, toi_max)
-        .data
-        for x in epochs_complete
-    ]
-)
-
-tfr_theta_old_list = list(
-    [
-        tfr_morlet(
-            x[triggers_old].pick_channels(ch_fronto_central),
-            theta_freqs,
-            n_cycles=n_cycles,
-            average=True,
-            return_itc=False,
-            n_jobs=1,
-        )
-        .crop(toi_min, toi_max)
-        .data
-        for x in epochs_complete
-    ]
-)
+# If there is a wavelet file, and overwrite is false, load data
+if fname_h2b_wavelet.exists() and not overwrite:
+    file_wavelet_h2b = open(fname_h2b_wavelet, "rb")
+    tfr_diff_list = pickle.load(file_wavelet_h2b)
+    file_wavelet_h2b.close()
+else:
+    tfr_diff_h2b_list = list(
+        [
+            np.subtract(
+                tfr_morlet(
+                    x[triggers_new].pick_channels(ch_fronto_central),
+                    theta_freqs,
+                    n_cycles=n_cycles,
+                    average=True,
+                    return_itc=False,
+                    n_jobs=6,
+                )
+                .crop(toi_min, toi_max)
+                .data,
+                tfr_morlet(
+                    x[triggers_old].pick_channels(ch_fronto_central),
+                    theta_freqs,
+                    n_cycles=n_cycles,
+                    average=True,
+                    return_itc=False,
+                    n_jobs=6,
+                )
+                .crop(toi_min, toi_max)
+                .data,
+            )
+            for x in epochs_complete
+        ]
+    )
+    file_wavelet_h2b = open(fname_h2b_wavelet, "wb")
+    pickle.dump(tfr_diff_h2b_list, file_wavelet_h2b)
+    file_wavelet_h2b.close()
 # %%
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs),freq, time, n_vertices (channels)).
-tfr_theta_new_arr = np.stack(tfr_theta_new_list, axis=2).transpose(2, 1, 3, 0)
-tfr_theta_old_arr = np.stack(tfr_theta_old_list, axis=2).transpose(2, 1, 3, 0)
-X_h2b = [tfr_theta_new_arr, tfr_theta_old_arr]
+tfr_theta_diff_arr = np.stack(tfr_diff_h2b_list, axis=2).transpose(2, 1, 3, 0)
 # %%
 # Make sensor-frequency adjacancy matrix
-tf_timepoints = tfr_theta_new_arr.shape[2]
+tf_timepoints = tfr_theta_diff_arr.shape[2]
 tfr_adjacency = mne.stats.combine_adjacency(
     len(theta_freqs), tf_timepoints, sensor_adjacency
 )
 # %%
-# Calculate statistical thresholds, h2b not confirmed
-t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = spatio_temporal_cluster_test(
-    X_h2b, tfce, n_permutations=1000, adjacency=tfr_adjacency
-)
+# Calculate statistical thresholds, not confirmed
+if fname_h2b_cluster.exists() and not overwrite:
+    file_h2b_cluster = open(fname_h2b_cluster, "rb")
+    clusterstats = pickle.load(file_h2b_cluster)
+    file_h2b_cluster.close()
+else:
+    clusterstats = spatio_temporal_cluster_1samp_test(
+        tfr_theta_diff_arr, tfce, n_permutations=1000, adjacency=tfr_adjacency
+    )
+    file_h2b_cluster = open(fname_h2b_cluster, "wb")
+    pickle.dump(tfr_diff_h2b_list, file_h2b_cluster)
+    file_h2b_cluster.close()
+
+t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = clusterstats
 significant_points_h2b = np.where(cluster_pv_h2b < p_accept)[0]
 # %%
 # calculate power difference
-grand_avg_tfr_old = np.average(tfr_theta_old_arr, axis=0)
-grand_avg_tfr_new = np.average(tfr_theta_new_arr, axis=0)
-tfr_theta_diff = np.subtract(grand_avg_tfr_new, grand_avg_tfr_old).transpose(1, 0, 2)
+tfr_theta_diff = np.average(tfr_theta_diff_arr, axis=0)
 t_obs_h2b_t = t_obs_h2b.transpose(1, 0, 2)
 # %%
 # make h2b figure
@@ -314,65 +333,75 @@ report.add_figure(
 # %%
 # Hypothesis 2c.
 # Do wavelet tranformation on whole epoch to get tfr
-tfr_alpha_new_list = list(
-    [
-        tfr_morlet(
-            x[triggers_new].pick_channels(ch_posterior),
-            alpha_freqs,
-            n_cycles=n_cycles,
-            average=True,
-            return_itc=False,
-            n_jobs=1,
-        )
-        .crop(toi_min, toi_max)
-        .data
-        for x in epochs_complete
-    ]
-)
-
-tfr_alpha_old_list = list(
-    [
-        tfr_morlet(
-            x[triggers_old].pick_channels(ch_posterior),
-            alpha_freqs,
-            n_cycles=n_cycles,
-            average=True,
-            return_itc=False,
-            n_jobs=1,
-        )
-        .crop(toi_min, toi_max)
-        .data
-        for x in epochs_complete
-    ]
-)
+# If there is a wavelet file, and overwrite is false, load data
+if fname_h2c_wavelet.exists() and not overwrite:
+    file_wavelet_h2c = open(fname_h2c_wavelet, "rb")
+    tfr_diff_h2c_list = pickle.load(file_wavelet_h2c)
+    file_wavelet_h2c.close()
+else:
+    tfr_diff_h2c_list = list(
+        [
+            np.subtract(
+                tfr_morlet(
+                    x[triggers_new].pick_channels(ch_posterior),
+                    alpha_freqs,
+                    n_cycles=n_cycles,
+                    average=True,
+                    return_itc=False,
+                    n_jobs=6,
+                )
+                .crop(toi_min, toi_max)
+                .data,
+                tfr_morlet(
+                    x[triggers_old].pick_channels(ch_posterior),
+                    alpha_freqs,
+                    n_cycles=n_cycles,
+                    average=True,
+                    return_itc=False,
+                    n_jobs=6,
+                )
+                .crop(toi_min, toi_max)
+                .data,
+            )
+            for x in epochs_complete
+        ]
+    )
+    file_wavelet_h2c = open(fname_h2c_wavelet, "wb")
+    pickle.dump(tfr_diff_h2c_list, file_wavelet_h2c)
+    file_wavelet_h2c.close()
 # %%
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs),freq, time, n_vertices (channels)).
-tfr_alpha_new_arr = np.stack(tfr_alpha_new_list, axis=2).transpose(2, 1, 3, 0)
-tfr_alpha_old_arr = np.stack(tfr_alpha_old_list, axis=2).transpose(2, 1, 3, 0)
-X_h2c = [tfr_alpha_new_arr, tfr_alpha_old_arr]
+tfr_alpha_diff_arr = np.stack(tfr_diff_h2c_list, axis=2).transpose(2, 1, 3, 0)
 # %%
 # Make sensor-frequency adjacancy matrix for alpha channels
 sensor_adjacency_alpha, ch_names_alpha = find_ch_adjacency(
     epochs_complete[1].copy().pick_channels(ch_posterior).info, "eeg"
 )
-tf_timepoints = tfr_alpha_new_arr.shape[2]
+tf_timepoints_alpha = tfr_alpha_diff_arr.shape[2]
 tfr_adjacency_alpha = mne.stats.combine_adjacency(
-    len(alpha_freqs), tf_timepoints, sensor_adjacency_alpha
+    len(alpha_freqs), tf_timepoints_alpha, sensor_adjacency_alpha
 )
 # %%
 # Calculate statistical thresholds, h2c
-t_obs_h2c, clusters_h2c, cluster_pv_h2c, h0_h2c = spatio_temporal_cluster_test(
-    X_h2c, tfce, n_permutations=1000, adjacency=tfr_adjacency_alpha
-)
+# Calculate statistical thresholds, not confirmed
+if fname_h2c_cluster.exists() and not overwrite:
+    file_h2c_cluster = open(fname_h2c_cluster, "rb")
+    clusterstats_h2c = pickle.load(file_h2c_cluster)
+    file_h2c_cluster.close()
+else:
+    clusterstats_h2c = spatio_temporal_cluster_1samp_test(
+        tfr_theta_diff_arr, tfce, n_permutations=1000, adjacency=tfr_adjacency
+    )
+    file_h2c_cluster = open(fname_h2c_cluster, "wb")
+    pickle.dump(tfr_diff_h2c_list, file_h2c_cluster)
+    file_h2c_cluster.close()
+
+t_obs_h2c, clusters_h2c, cluster_pv_h2c, h0_h2c = clusterstats_h2c
 significant_points_h2c = np.where(cluster_pv_h2c < p_accept)[0]
 # %%
 # calculate power difference
-grand_avg_tfr_alpha_old = np.average(tfr_alpha_old_arr, axis=0)
-grand_avg_tfr_alpha_new = np.average(tfr_alpha_new_arr, axis=0)
-tfr_alpha_diff = np.subtract(
-    grand_avg_tfr_alpha_old, grand_avg_tfr_alpha_new
-).transpose(1, 0, 2)
+tfr_alpha_diff = np.average(tfr_alpha_diff_arr, axis=0)
 t_obs_h2c_t = t_obs_h2c.transpose(1, 0, 2)
 # %%
 # make h2b figure
