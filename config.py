@@ -85,7 +85,10 @@ FNAME_BAD_EPOS_TEMPLATE = os.path.join(
 )
 # Hypotheses tests
 FNAME_REPORT_HYPOTHESES_TEMPLATE = os.path.join(
-    str(FPATH_DS), "derivatives", "{h}", "{h}_report-ica.html"
+    str(FPATH_DS), "derivatives", "{h}", "{h}_report.html"
+)
+FNAME_REPORT_CLUSTER_TEMPLATE = os.path.join(
+    str(FPATH_DS), "derivatives", "{h}", "{h}_cluster.pkl"
 )
 # Constants
 # --------------------------------------------------------------------

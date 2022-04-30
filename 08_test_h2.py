@@ -75,10 +75,7 @@ if not hasattr(sys, "ps1"):
         fpath_ds=fpath_ds,
         overwrite=overwrite,
     )
-
     defaults = parse_overwrite(defaults)
-
-    sub = defaults["sub"]
     fpath_ds = defaults["fpath_ds"]
     overwrite = defaults["overwrite"]
 # %%

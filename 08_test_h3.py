@@ -14,6 +14,7 @@ import itertools
 # %%
 # Imports
 import os
+import pickle
 import sys
 from pathlib import Path
 
@@ -21,8 +22,9 @@ import matplotlib.pyplot as plt
 import mne
 import numpy as np
 from mne.channels import find_ch_adjacency
-from mne.stats import spatio_temporal_cluster_test
+from mne.stats import spatio_temporal_cluster_1samp_test, spatio_temporal_cluster_test
 from mne.time_frequency import tfr_morlet
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from config import (
     FNAME_REPORT_HYPOTHESES_TEMPLATE,
@@ -41,8 +43,9 @@ overwrite = True
 tfce = dict(start=0, step=0.2)
 p_accept = 0.05
 # Time frequency
-freqs = np.logspace(*np.log10([4, 100]), num=40)
+freqs = np.logspace(*np.log10([4, 100]), num=40).round()
 n_cycles = freqs / 2.0  # different number of cycle per frequency
+n_cycles.round()
 # toi
 toi_min = -0.2
 toi_max = 1.5
@@ -74,8 +77,6 @@ if not hasattr(sys, "ps1"):
     )
 
     defaults = parse_overwrite(defaults)
-
-    sub = defaults["sub"]
     fpath_ds = defaults["fpath_ds"]
     overwrite = defaults["overwrite"]
 # %%
@@ -113,6 +114,7 @@ epochs = [
 # %%
 #  Keep only existing subs
 epochs_complete = list(filter(None.__ne__, epochs))
+
 # %%
 # Get a list of epochs in the desired timerange and with the desired channels.
 # already put it into the format needed for permutation test
@@ -132,9 +134,20 @@ evokeds_misses_list = list(
         for x in epochs_complete
     ]
 )
+
+evokeds_diff_list = list(
+    [
+        np.subtract(
+            x[triggers_hits].crop(toi_min, toi_max).average().get_data(),
+            x[triggers_misses].crop(toi_min, toi_max).average().get_data(),
+        )
+        for x in epochs_complete
+    ]
+)
 # add list elements along array axis and reshape for permutation test
 evokeds_hits_arr = np.stack(evokeds_hits_list, axis=2).transpose(2, 1, 0)
 evokeds_misses_arr = np.stack(evokeds_misses_list, axis=2).transpose(2, 1, 0)
+evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
 # Concatanate conditions for use with cluster based permutation test
 X_h3a = [evokeds_hits_arr, evokeds_misses_arr]
 # %%
@@ -144,10 +157,36 @@ sensor_adjacency, ch_names_theta = find_ch_adjacency(
 )
 # %%
 # Calculate statistical thresholds, h3a confirmed
-t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = spatio_temporal_cluster_test(
-    X_h3a, tfce, n_permutations=1000, adjacency=sensor_adjacency, n_jobs=40
-)
+# Check overwrite
+fname_h3a = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h3a_cluster"))
+# If there is a cluster test, and overwrite is false, load data
+if fname_h3a.exists() and not overwrite:
+    file = open(fname_h3a, "rb")
+    clusterstats = pickle.load(file)
+    file.close()
+# If overwriting is false compute everything again
+else:
+    clusterstats = spatio_temporal_cluster_test(
+        X_h3a, tfce, n_permutations=1000, adjacency=sensor_adjacency, n_jobs=40
+    )
+    file = open(fname_h3a, "wb")
+    pickle.dump(clusterstats, file)
+    file.close()
+    t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = clusterstats
+
 significant_points_h3a = cluster_pv_h3a.reshape(t_obs_h3a.shape).T < 0.05
+
+# %%
+# Calculate thresholdes on within subject difference
+(
+    t_obs_h3a_diff,
+    clusters_h3a_diff,
+    cluster_pv_h3a_diff,
+    h0_h3a_diff,
+) = spatio_temporal_cluster_1samp_test(
+    evokeds_diff_arr, tfce, n_permutations=1000, adjacency=sensor_adjacency, n_jobs=40
+)
+significant_points_h3a_diff = cluster_pv_h3a_diff.reshape(t_obs_h3a_diff.shape).T < 0.05
 # %%
 # Visualize the voltage, taking the average of all subjects
 # old images
@@ -183,7 +222,7 @@ toi_evoked = evoked.copy().crop(toi_min, toi_max)
 h3a_test = toi_evoked.plot_image(
     colorbar=False,
     show=False,
-    mask=significant_points_h3a,
+    mask=significant_points_h3a_diff,
     show_names="all",
     titles="Significant timepoints",
     **time_unit,
@@ -202,63 +241,80 @@ report.add_figure(
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
-tfr_hits_list = list(
-    [
-        tfr_morlet(
-            x[triggers_misses],
-            freqs,
-            n_cycles=n_cycles,
-            average=True,
-            return_itc=False,
-            n_jobs=40,
-        )
-        .crop(toi_min, toi_max)
-        .data
-        for x in epochs_complete
-    ]
-)
-
-tfr_misses_list = list(
-    [
-        tfr_morlet(
-            x[triggers_hits],
-            freqs,
-            n_cycles=n_cycles,
-            average=True,
-            return_itc=False,
-            n_jobs=40,
-        )
-        .crop(toi_min, toi_max)
-        .data
-        for x in epochs_complete
-    ]
-)
+fname_h3b_wavelet = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h3b_wavelet"))
+# If there is a cluster test, and overwrite is false, load data
+if fname_h3b_wavelet.exists() and not overwrite:
+    file_wavelet = open(fname_h3b_wavelet, "rb")
+    tfr_diff_list = pickle.load(file)
+    file.close()
+else:
+    tfr_diff_list = list(
+        [
+            np.subtract(
+                tfr_morlet(
+                    x[triggers_hits],
+                    freqs,
+                    n_cycles=n_cycles,
+                    average=True,
+                    return_itc=False,
+                    n_jobs=6,
+                )
+                .crop(toi_min, toi_max)
+                .data,
+                tfr_morlet(
+                    x[triggers_misses],
+                    freqs,
+                    n_cycles=n_cycles,
+                    average=True,
+                    return_itc=False,
+                    n_jobs=6,
+                )
+                .crop(toi_min, toi_max)
+                .data,
+            )
+            for x in epochs_complete
+        ]
+    )
+    file = open(fname_h3b_wavelet, "wb")
+    pickle.dump(tfr_diff_list, file)
+    file.close()
 # %%
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs),freq, time, n_vertices (channels)).
-tfr_hits_arr = np.stack(tfr_hits_list, axis=2).transpose(2, 1, 3, 0)
-tfr_misses_arr = np.stack(tfr_misses_list, axis=2).transpose(2, 1, 3, 0)
-X_h3b = [tfr_hits_arr, tfr_misses_arr]
+tfr_diff_arr = np.stack(tfr_diff_list, axis=2).transpose(2, 1, 3, 0)
 # %%
 # Make sensor-frequency adjacancy matrix
-tf_timepoints = tfr_hits_arr.shape[2]
+tf_timepoints = tfr_diff_arr.shape[2]
 tfr_adjacency = mne.stats.combine_adjacency(len(freqs), tf_timepoints, sensor_adjacency)
 # %%
-# Calculate statistical thresholds
-t_obs_h3b, clusters_h3b, cluster_pv_h3b, h0_h3b = spatio_temporal_cluster_test(
-    X_h3b, tfce, n_permutations=1000, adjacency=tfr_adjacency, n_jobs=40
-)
-significant_points_h3b = np.where(cluster_pv_h3b < p_accept)[0]
+# do clusterstats
+fname_h3b_cluster = Path(FNAME_REPORT_HYPOTHESES_TEMPLATE.format(h="h3b_cluster"))
+# If there is a cluster test filse, and overwrite is false, load data
+if fname_h3b_cluster.exists() and not overwrite:
+    file_cluster = open(fname_h3b_cluster, "rb")
+    clusterstats_h3b = pickle.load(file)
+    file.close()
+else:
+    clusterstats = spatio_temporal_cluster_1samp_test(
+        tfr_diff_arr,
+        threshold=tfce,
+        n_permutations=1000,
+        adjacency=tfr_adjacency,
+        n_jobs=40,
+    )
+    t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
+    file_cluster = open(fname_h3b_cluster, "wb")
+    pickle.dump(clusterstats, file)
+    file.close()
+significant_points_diff_h3b = np.where(cluster_pv_diff_h3b < 0.05)[0]
 # %%
-# calculate power difference
-grand_avg_tfr_old = np.average(tfr_hits_arr, axis=0)
-grand_avg_tfr_new = np.average(tfr_misses_arr, axis=0)
-tfr_theta_diff = np.subtract(grand_avg_tfr_new, grand_avg_tfr_old).transpose(1, 0, 2)
-t_obs_h3b_t = t_obs_h3b.transpose(1, 0, 2)
+# calculate average power difference
+tfr_theta_diff = np.average(tfr_diff_arr, axis=0).transpose(1, 0, 2)
+t_obs_diff_h3b_t = t_obs_diff_h3b.transpose(1, 0, 2)
 # %%
-# make h2b figure
+# make h3b figure
 h3b_test, axs = plt.subplots(
-    nrows=len(ch_names_theta), ncols=2, figsize=(20, 20), constrained_layout=True
+    nrows=len(ch_names_theta), ncols=2, figsize=(100, 20), constrained_layout=True
 )
 
 for ch_idx in range(0, len(ch_names_theta)):
@@ -276,7 +332,7 @@ for ch_idx in range(0, len(ch_names_theta)):
 
     plt.sca(axs[ch_idx, 1])
     plt.imshow(
-        t_obs_h3b_t[:, :, ch_idx],
+        t_obs_diff_h3b_t[:, :, ch_idx],
         aspect="auto",
         origin="lower",
         extent=[toi_min, toi_max, freqs[0], freqs[-1]],
@@ -296,3 +352,90 @@ report.add_figure(
     + "show the corresponding T-statistic",
     image_format="PNG",
 )
+
+# %%
+for i_clu, clu_idx in enumerate(significant_points_diff_h3b):
+    # unpack cluster information, get unique indices
+    freq_inds, time_inds, space_inds = clusters_diff_h3b[clu_idx]
+    ch_inds = np.unique(space_inds)
+    time_inds = np.unique(time_inds)
+    freq_inds = np.unique(freq_inds)
+
+    # get topography for F stat
+    t_map_h3b = t_obs_diff_h3b[freq_inds].mean(axis=0)
+    t_map_h3b = t_map_h3b[time_inds].mean(axis=0)
+
+    # get signals at the sensors contributing to the cluster
+    sig_times = tfr_diff_list[0].times[time_inds]
+
+    # initialize figure
+    fig, ax_topo = plt.subplots(1, 1, figsize=(10, 3))
+
+    # create spatial mask
+    mask = np.zeros((t_map_h3b.shape[0], 1), dtype=bool)
+    mask[ch_inds, :] = True
+
+    # plot average test statistic and mark significant sensors
+    f_evoked = mne.EvokedArray(
+        t_map_h3b[:, np.newaxis], tfr_diff_list[0].info, tmin=-0.2
+    )
+    f_evoked.plot_topomap(
+        times=0,
+        mask=mask,
+        axes=ax_topo,
+        cmap="Reds",
+        vmin=np.min,
+        vmax=np.max,
+        show=False,
+        colorbar=False,
+        mask_params=dict(markersize=10),
+    )
+    image = ax_topo.images[0]
+
+    # create additional axes (for ERF and colorbar)
+    divider = make_axes_locatable(ax_topo)
+
+    # add axes for colorbar
+    ax_colorbar = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(image, cax=ax_colorbar)
+    ax_topo.set_xlabel(
+        "Averaged T-map ({:0.3f} - {:0.3f} s)".format(*sig_times[[0, -1]])
+    )
+
+    # add new axis for spectrogram
+    ax_spec = divider.append_axes("right", size="300%", pad=1.2)
+    title = "Cluster #{0}, {1} spectrogram".format(i_clu + 1, len(ch_inds))
+    if len(ch_inds) > 1:
+        title += " (max over channels)"
+    F_obs_plot = t_obs_diff_h3b[..., ch_inds].max(axis=-1)
+    F_obs_plot_sig = np.zeros(F_obs_plot.shape) * np.nan
+    F_obs_plot_sig[tuple(np.meshgrid(freq_inds, time_inds))] = F_obs_plot[
+        tuple(np.meshgrid(freq_inds, time_inds))
+    ]
+
+    for f_image, cmap in zip([F_obs_plot, F_obs_plot_sig], ["gray", "autumn"]):
+        c = ax_spec.imshow(
+            f_image,
+            cmap=cmap,
+            aspect="auto",
+            origin="lower",
+            extent=[
+                tfr_diff_list[0].times[0],
+                tfr_diff_list[0].times[-1],
+                freqs[0],
+                freqs[-1],
+            ],
+        )
+    ax_spec.set_xlabel("Time (ms)")
+    ax_spec.set_ylabel("Frequency (Hz)")
+    ax_spec.set_title(title)
+
+    # add another colorbar
+    ax_colorbar2 = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(c, cax=ax_colorbar2)
+    ax_colorbar2.set_ylabel("F-stat")
+
+    # clean up viz
+    mne.viz.tight_layout(fig=fig)
+    fig.subplots_adjust(bottom=0.05)
+# %%
