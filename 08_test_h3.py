@@ -290,7 +290,7 @@ t_obs_diff_h3b_t = t_obs_diff_h3b.transpose(1, 0, 2)
 # %%
 # make h3b figure for every channel.
 h3b_test, axs = plt.subplots(
-    nrows=len(ch_names_theta), ncols=2, figsize=(100, 20), constrained_layout=True
+    nrows=len(ch_names_theta), ncols=2, figsize=(200, 20), constrained_layout=True
 )
 
 for ch_idx in range(0, len(ch_names_theta)):
@@ -339,3 +339,8 @@ tfr_specs = tfr_morlet(
     return_itc=False,
     n_jobs=6,
 ).crop(toi_min, toi_max)
+
+# %% save report
+report.save(fname_report, overwrite=overwrite)
+
+# %%
