@@ -16,15 +16,15 @@ import itertools
 import os
 import pickle
 import sys
+from functools import partial
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
 from mne.channels import find_ch_adjacency
-from mne.stats import spatio_temporal_cluster_1samp_test
+from mne.stats import spatio_temporal_cluster_1samp_test, ttest_1samp_no_p
 from mne.time_frequency import tfr_morlet
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from config import (
     FNAME_HYPOTHESES_3_TEMPLATE,
@@ -47,6 +47,9 @@ fname_h3b_cluster = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_cluster.pkl")
 # Settings for cluster test
 tfce = dict(start=0, step=0.2)
 p_accept = 0.05
+sigma = 1e-3  # sigma for the "hat" method
+stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
+
 # Time frequency
 freqs = np.logspace(*np.log10([4, 100]), num=40).round()
 n_cycles = freqs / 2.0  # different number of cycle per frequency
@@ -153,6 +156,7 @@ else:
         n_permutations=1000,
         adjacency=sensor_adjacency,
         n_jobs=40,
+        stat_fun=stat_fun_hat,
     )
     file = open(fname_h3a, "wb")
     pickle.dump(clusterstats, file)
@@ -272,6 +276,7 @@ else:
         n_permutations=1000,
         adjacency=tfr_adjacency,
         n_jobs=40,
+        stat_fun=stat_fun_hat,
     )
     t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
     file_h3b_cluster = open(fname_h3b_cluster, "wb")
@@ -334,97 +339,3 @@ tfr_specs = tfr_morlet(
     return_itc=False,
     n_jobs=6,
 ).crop(toi_min, toi_max)
-# %%
-# make figure
-for i_clu, clu_idx in enumerate(significant_points_diff_h3b):
-    # unpack cluster information, get unique indices
-    freq_inds, time_inds, space_inds = clusters_diff_h3b[clu_idx]
-    ch_inds = np.unique(space_inds)
-    time_inds = np.unique(time_inds)
-    freq_inds = np.unique(freq_inds)
-
-    # get topography for F stat
-    t_map_h3b = t_obs_diff_h3b[freq_inds].mean(axis=0)
-    t_map_h3b = t_map_h3b[time_inds].mean(axis=0)
-
-    # get signals at the sensors contributing to the cluster
-    sig_times = tfr_specs.times[time_inds]
-
-    # initialize figure
-    fig, ax_topo = plt.subplots(1, 1, figsize=(10, 3))
-
-    # create spatial mask
-    mask = np.zeros((t_map_h3b.shape[0], 1), dtype=bool)
-    mask[ch_inds, :] = True
-
-    # plot average test statistic and mark significant sensors
-    f_evoked = mne.EvokedArray(t_map_h3b[:, np.newaxis], tfr_specs.info, tmin=-0.2)
-    f_evoked.plot_topomap(
-        # times=0,
-        mask=mask,
-        axes=ax_topo,
-        cmap="Reds",
-        vmin=np.min,
-        vmax=np.max,
-        show=False,
-        colorbar=False,
-        mask_params=dict(markersize=10),
-    )
-    image = ax_topo.images[0]
-
-    # create additional axes (for ERF and colorbar)
-    divider = make_axes_locatable(ax_topo)
-
-    # add axes for colorbar
-    ax_colorbar = divider.append_axes("right", size="5%", pad=0.05)
-    plt.colorbar(image, cax=ax_colorbar)
-    ax_topo.set_xlabel(
-        "Averaged T-map ({:0.3f} - {:0.3f} s)".format(*sig_times[[0, -1]])
-    )
-
-    # add new axis for spectrogram
-    ax_spec = divider.append_axes("right", size="300%", pad=1.2)
-    title = "Cluster #{0}, {1} spectrogram".format(i_clu + 1, len(ch_inds))
-    if len(ch_inds) > 1:
-        title += " (max over channels)"
-    F_obs_plot = t_obs_diff_h3b[..., ch_inds].max(axis=-1)
-    F_obs_plot_sig = np.zeros(F_obs_plot.shape) * np.nan
-    F_obs_plot_sig[tuple(np.meshgrid(freq_inds, time_inds))] = F_obs_plot[
-        tuple(np.meshgrid(freq_inds, time_inds))
-    ]
-
-    for f_image, cmap in zip([F_obs_plot, F_obs_plot_sig], ["gray", "autumn"]):
-        c = ax_spec.imshow(
-            f_image,
-            cmap=cmap,
-            aspect="auto",
-            origin="lower",
-            extent=[
-                tfr_specs.times[0],
-                tfr_specs.times[-1],
-                freqs[0],
-                freqs[-1],
-            ],
-        )
-    ax_spec.set_xlabel("Time (ms)")
-    ax_spec.set_ylabel("Frequency (Hz)")
-    ax_spec.set_title(title)
-
-    # add another colorbar
-    ax_colorbar2 = divider.append_axes("right", size="5%", pad=0.05)
-    plt.colorbar(c, cax=ax_colorbar2)
-    ax_colorbar2.set_ylabel("F-stat")
-
-    # clean up viz
-    mne.viz.tight_layout(fig=fig)
-    fig.subplots_adjust(bottom=0.05)
-
-# %%
-report.add_figure(
-    fig=fig,
-    title="h3b sig",
-    caption="This figure shows where the power difference between old and new"
-    + "image presentation are significant according"
-    + "to a cluster based permutation test.",
-    image_format="PNG",
-)

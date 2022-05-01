@@ -16,13 +16,14 @@ import itertools
 import os
 import pickle
 import sys
+from functools import partial
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
 from mne.channels import find_ch_adjacency
-from mne.stats import spatio_temporal_cluster_1samp_test
+from mne.stats import spatio_temporal_cluster_1samp_test, ttest_1samp_no_p
 from mne.time_frequency import tfr_morlet
 
 from config import (
@@ -47,6 +48,9 @@ fname_h2c_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_cluster.pkl")
 # Settings for cluster test
 tfce = dict(start=0, step=0.2)
 p_accept = 0.05
+sigma = 1e-3  # sigma for the "hat" method
+stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
+
 # Time frequency
 n_cycles = 7
 alpha_freqs = np.arange(8, 12.5, 0.5)  # define frequencies of interest
@@ -163,7 +167,8 @@ else:
         tfce,
         n_permutations=1000,
         adjacency=sensor_adjacency,
-        n_jobs=40,
+        n_jobs=6,
+        stat_fun=stat_fun_hat,
     )
     file = open(fname_h2a, "wb")
     pickle.dump(clusterstats, file)
@@ -274,7 +279,7 @@ tfr_theta_diff_arr = np.stack(tfr_diff_h2b_list, axis=2).transpose(2, 1, 3, 0)
 # %%
 # Make sensor-frequency adjacancy matrix
 tf_timepoints = tfr_theta_diff_arr.shape[2]
-tfr_adjacency, ch_names_theta = mne.stats.combine_adjacency(
+tfr_adjacency = mne.stats.combine_adjacency(
     len(theta_freqs), tf_timepoints, sensor_adjacency
 )
 # %%
@@ -285,7 +290,11 @@ if fname_h2b_cluster.exists() and not overwrite:
     file_h2b_cluster.close()
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
-        tfr_theta_diff_arr, tfce, n_permutations=1000, adjacency=tfr_adjacency
+        tfr_theta_diff_arr,
+        tfce,
+        n_permutations=1000,
+        adjacency=tfr_adjacency,
+        stat_fun=stat_fun_hat,
     )
     file_h2b_cluster = open(fname_h2b_cluster, "wb")
     pickle.dump(tfr_diff_h2b_list, file_h2b_cluster)
@@ -300,10 +309,10 @@ t_obs_h2b_t = t_obs_h2b.transpose(1, 0, 2)
 # %%
 # make h2b figure
 h2b_test, axs = plt.subplots(
-    nrows=len(ch_names_theta), ncols=2, figsize=(20, 20), constrained_layout=True
+    nrows=len(ch_names), ncols=2, figsize=(20, 20), constrained_layout=True
 )
 
-for ch_idx in range(0, len(ch_names_theta)):
+for ch_idx in range(0, len(ch_names)):
     plt.sca(axs[ch_idx, 0])
     plt.imshow(
         tfr_theta_diff[:, :, ch_idx],
@@ -314,7 +323,7 @@ for ch_idx in range(0, len(ch_names_theta)):
     plt.colorbar()
     plt.xlabel("Time (ms)")
     plt.ylabel("Frequency (Hz)")
-    plt.title(f"Power difference new - old \n ({ch_names_theta[ch_idx]})")
+    plt.title(f"Power difference new - old \n ({ch_names[ch_idx]})")
 
     plt.sca(axs[ch_idx, 1])
     plt.imshow(
@@ -326,7 +335,7 @@ for ch_idx in range(0, len(ch_names_theta)):
     plt.colorbar()
     plt.xlabel("Time (ms)")
     plt.ylabel("Frequency (Hz)")
-    plt.title(f"Cluster T_val difference new -old \n ({ch_names_theta[ch_idx]})")
+    plt.title(f"Cluster T_val difference new -old \n ({ch_names[ch_idx]})")
 
 
 report.add_figure(
@@ -399,7 +408,11 @@ if fname_h2c_cluster.exists() and not overwrite:
     file_h2c_cluster.close()
 else:
     clusterstats_h2c = spatio_temporal_cluster_1samp_test(
-        tfr_theta_diff_arr, tfce, n_permutations=1000, adjacency=tfr_adjacency
+        tfr_alpha_diff_arr,
+        tfce,
+        n_permutations=1000,
+        adjacency=tfr_adjacency_alpha,
+        stat_fun=stat_fun_hat,
     )
     file_h2c_cluster = open(fname_h2c_cluster, "wb")
     pickle.dump(tfr_diff_h2c_list, file_h2c_cluster)
