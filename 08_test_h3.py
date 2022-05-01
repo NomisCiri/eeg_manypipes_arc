@@ -274,9 +274,9 @@ else:
         n_jobs=40,
     )
     t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
-    file_cluster = open(fname_h3b_cluster, "wb")
-    pickle.dump(clusterstats, file)
-    file.close()
+    file_h3b_cluster = open(fname_h3b_cluster, "wb")
+    pickle.dump(clusterstats, file_h3b_cluster)
+    file_h3b_cluster.close()
 significant_points_diff_h3b = np.where(cluster_pv_diff_h3b < 0.05)[0]
 # %%
 # calculate average power difference
@@ -325,6 +325,16 @@ report.add_figure(
 )
 
 # %%
+# make dummy tfr for figure
+tfr_specs = tfr_morlet(
+    epochs_complete[0][triggers_hits],
+    freqs,
+    n_cycles=n_cycles,
+    average=True,
+    return_itc=False,
+    n_jobs=6,
+).crop(toi_min, toi_max)
+# %%
 # make figure
 for i_clu, clu_idx in enumerate(significant_points_diff_h3b):
     # unpack cluster information, get unique indices
@@ -338,7 +348,7 @@ for i_clu, clu_idx in enumerate(significant_points_diff_h3b):
     t_map_h3b = t_map_h3b[time_inds].mean(axis=0)
 
     # get signals at the sensors contributing to the cluster
-    sig_times = tfr_diff_list[0].times[time_inds]
+    sig_times = tfr_specs.times[time_inds]
 
     # initialize figure
     fig, ax_topo = plt.subplots(1, 1, figsize=(10, 3))
@@ -348,11 +358,9 @@ for i_clu, clu_idx in enumerate(significant_points_diff_h3b):
     mask[ch_inds, :] = True
 
     # plot average test statistic and mark significant sensors
-    f_evoked = mne.EvokedArray(
-        t_map_h3b[:, np.newaxis], tfr_diff_list[0].info, tmin=-0.2
-    )
+    f_evoked = mne.EvokedArray(t_map_h3b[:, np.newaxis], tfr_specs.info, tmin=-0.2)
     f_evoked.plot_topomap(
-        times=0,
+        # times=0,
         mask=mask,
         axes=ax_topo,
         cmap="Reds",
@@ -392,8 +400,8 @@ for i_clu, clu_idx in enumerate(significant_points_diff_h3b):
             aspect="auto",
             origin="lower",
             extent=[
-                tfr_diff_list[0].times[0],
-                tfr_diff_list[0].times[-1],
+                tfr_specs.times[0],
+                tfr_specs.times[-1],
                 freqs[0],
                 freqs[-1],
             ],
@@ -410,4 +418,13 @@ for i_clu, clu_idx in enumerate(significant_points_diff_h3b):
     # clean up viz
     mne.viz.tight_layout(fig=fig)
     fig.subplots_adjust(bottom=0.05)
+
 # %%
+report.add_figure(
+    fig=fig,
+    title="h3b sig",
+    caption="This figure shows where the power difference between old and new"
+    + "image presentation are significant according"
+    + "to a cluster based permutation test.",
+    image_format="PNG",
+)

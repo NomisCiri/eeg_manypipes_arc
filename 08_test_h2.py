@@ -126,8 +126,16 @@ epochs_complete = list(filter(None.__ne__, epochs))
 evokeds_diff_list = list(
     [
         np.subtract(
-            x[triggers_old].crop(toi_min, toi_max).average().get_data(),
-            x[triggers_new].crop(toi_min, toi_max).average().get_data(),
+            x[triggers_old]
+            .crop(toi_min, toi_max)
+            .pick_channels(ch_fronto_central)
+            .average()
+            .get_data(),
+            x[triggers_new]
+            .crop(toi_min, toi_max)
+            .pick_channels(ch_fronto_central)
+            .average()
+            .get_data(),
         )
         for x in epochs_complete
     ]
@@ -137,7 +145,7 @@ evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
 # Concatanate conditions for use with cluster based permutation test
 # %%
 # Calculate adjacency matrix between sensors from their locations
-sensor_adjacency, ch_names_theta = find_ch_adjacency(
+sensor_adjacency, ch_names = find_ch_adjacency(
     epochs_complete[1].copy().pick_channels(ch_fronto_central).info, "eeg"
 )
 # %%
@@ -266,7 +274,7 @@ tfr_theta_diff_arr = np.stack(tfr_diff_h2b_list, axis=2).transpose(2, 1, 3, 0)
 # %%
 # Make sensor-frequency adjacancy matrix
 tf_timepoints = tfr_theta_diff_arr.shape[2]
-tfr_adjacency = mne.stats.combine_adjacency(
+tfr_adjacency, ch_names_theta = mne.stats.combine_adjacency(
     len(theta_freqs), tf_timepoints, sensor_adjacency
 )
 # %%
