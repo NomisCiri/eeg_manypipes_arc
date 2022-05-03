@@ -167,7 +167,7 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
         threshold=threshold,
-        n_permutations=1000,
+        n_permutations=10000,
         adjacency=sensor_adjacency,
         n_jobs=6,
         stat_fun=stat_fun_hat,
@@ -296,7 +296,7 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_theta_diff_arr,
         tfce,
-        n_permutations=1000,
+        n_permutations=10000,
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
     )

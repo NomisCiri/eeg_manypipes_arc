@@ -159,7 +159,6 @@ else:
         adjacency=sensor_adjacency,
         n_jobs=40,
         stat_fun=stat_fun_hat,
-        out_type="mask",
     )
     file = open(fname_h3a, "wb")
     pickle.dump(clusterstats, file)
@@ -172,22 +171,22 @@ sig_cluster_inds_h3a = np.where(cluster_pv_h3a < 0.01)[0]
 times_min_h3a = list()
 times_max_h3a = list()
 channels_h3a = list()
-freqs_h3a = list()
 
+# save cluster info for writing to file
 for i in range(0, len(sig_cluster_inds_h3a)):
     times_min_h3a.append(
         epochs_complete[0]
         .crop(toi_min, toi_max)
-        .times[min(clusters_h3a[sig_cluster_inds_h3a[i]][1])]
+        .times[min(clusters_h3a[sig_cluster_inds_h3a[i]][0])]
     )
     times_max_h3a.append(
         epochs_complete[0]
         .crop(toi_min, toi_max)
-        .times[max(clusters_h3a[sig_cluster_inds_h3a[i]][1])]
+        .times[max(clusters_h3a[sig_cluster_inds_h3a[i]][0])]
     )
     channels_h3a.append(
         np.array(epochs_complete[0].crop(toi_min, toi_max).ch_names)[
-            np.unique(clusters_h3a[sig_cluster_inds_h3a[i]][2])
+            np.unique(clusters_h3a[sig_cluster_inds_h3a[i]][1])
         ]
     )
 # %%
