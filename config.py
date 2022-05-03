@@ -86,7 +86,7 @@ FNAME_BAD_EPOS_TEMPLATE = os.path.join(
 # Hypotheses tests
 FNAME_HYPOTHESES_2_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h2", "{h}")
 FNAME_HYPOTHESES_3_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h3", "{h}")
-FNAME_HYPOTHESES_3_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h4", "{h}")
+FNAME_HYPOTHESES_4_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h4", "{h}")
 
 
 # Constants

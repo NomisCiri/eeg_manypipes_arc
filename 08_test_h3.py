@@ -39,7 +39,7 @@ from utils import catch, parse_overwrite
 # %%
 # Path and settings
 fpath_ds = FPATH_DS
-overwrite = False
+overwrite = True
 fname_report = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3_report.html"))
 fname_h3a = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3a_cluster.pkl"))
 fname_h3b_wavelet = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_wavelet.pkl"))
@@ -50,6 +50,7 @@ tfce = dict(start=0, step=0.2)
 p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
+threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
 
 # Time frequency
 freqs = np.logspace(*np.log10([4, 100]), num=40).round()
@@ -145,7 +146,6 @@ sensor_adjacency, ch_names_theta = find_ch_adjacency(
 # Calculate statistical thresholds, h3a confirmed
 # Check overwrite
 # If there is a cluster test, and overwrite is false, load data
-threshold = stats.distributions.t.ppf(1 - p_accept, 30 - 1)
 
 if fname_h3a.exists() and not overwrite:
     file = open(fname_h3a, "rb")
@@ -158,8 +158,8 @@ else:
         threshold=threshold,
         n_permutations=1000,
         adjacency=sensor_adjacency,
-        n_jobs=40
-        # stat_fun=stat_fun_hat,
+        n_jobs=40,
+        stat_fun=stat_fun_hat,
     )
     file = open(fname_h3a, "wb")
     pickle.dump(clusterstats, file)
@@ -276,7 +276,7 @@ if fname_h3b_cluster.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_diff_arr,
-        threshold=tfce,
+        threshold=threshold,
         n_permutations=1000,
         adjacency=tfr_adjacency,
         n_jobs=40,

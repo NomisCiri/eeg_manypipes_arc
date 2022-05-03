@@ -25,6 +25,7 @@ import numpy as np
 from mne.channels import find_ch_adjacency
 from mne.stats import spatio_temporal_cluster_1samp_test, ttest_1samp_no_p
 from mne.time_frequency import tfr_morlet
+from scipy import stats
 
 from config import (
     FNAME_HYPOTHESES_2_TEMPLATE,
@@ -47,9 +48,10 @@ fname_h2c_wavelet = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_wavelet.pkl")
 fname_h2c_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_cluster.pkl"))
 # Settings for cluster test
 tfce = dict(start=0, step=0.2)
-p_accept = 0.05
+p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
+threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
 
 # Time frequency
 n_cycles = 7
@@ -164,19 +166,21 @@ if fname_h2a.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
-        tfce,
+        threshold=threshold,
         n_permutations=1000,
         adjacency=sensor_adjacency,
         n_jobs=6,
         stat_fun=stat_fun_hat,
+        out_type="mask",
+        tail=0,
     )
     file = open(fname_h2a, "wb")
     pickle.dump(clusterstats, file)
     file.close()
-    t_obs_h2a, clusters_h2a, cluster_pv_h2a, h0_h2a = clusterstats
 
-significant_points_h2a = cluster_pv_h2a.reshape(t_obs_h2a.shape).T < p_accept
+t_obs_h2a, clusters_h2a, cluster_pv_h2a, h0_h2a = clusterstats
 # %%
+
 # Visualize the voltage, taking the average of all subjects
 # old images
 epochs_old_plot = list(
@@ -218,7 +222,7 @@ toi_evoked = evoked.copy().crop(toi_min, toi_max)
 h2a_test = toi_evoked.plot_image(
     colorbar=False,
     show=False,
-    mask=significant_points_h2a,
+    mask=clusters_h2a[0],
     show_names="all",
     titles="Significant timepoints",
     **time_unit,
@@ -471,3 +475,5 @@ report.add_figure(
 # %%
 # save report
 report.save(fname_report, overwrite=overwrite)
+
+# %%
