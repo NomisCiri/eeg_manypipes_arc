@@ -1,9 +1,8 @@
 """Test the hypotheses specified in the instructions.
 
 Hypotheses read:
-3. There are effects of successful recognition of old images (i.e., a difference between
-old images correctly recognized as old [hits] vs. old images incorrectly judged as new
-[misses]) ...
+There are effects of subsequent memory (i.e., a difference between images that will
+be successfully remembered vs. forgotten on a subsequent repetition) ...
 a. ... on EEG voltage at any channels, at any time.
 b. ... on spectral power, at any frequencies, at any channels, at any time.
 """
@@ -25,10 +24,9 @@ import numpy as np
 from mne.channels import find_ch_adjacency
 from mne.stats import spatio_temporal_cluster_1samp_test, ttest_1samp_no_p
 from mne.time_frequency import tfr_morlet
-from scipy import stats
 
 from config import (
-    FNAME_HYPOTHESES_3_TEMPLATE,
+    FNAME_HYPOTHESES_4_TEMPLATE,
     FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
@@ -39,15 +37,15 @@ from utils import catch, parse_overwrite
 # %%
 # Path and settings
 fpath_ds = FPATH_DS
-overwrite = False
-fname_report = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3_report.html"))
-fname_h3a = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3a_cluster.pkl"))
-fname_h3b_wavelet = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_wavelet.pkl"))
-fname_h3b_cluster = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_cluster.pkl"))
+overwrite = True
+fname_report = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4_report.html"))
+fname_h4a = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4a_cluster.pkl"))
+fname_h4b_wavelet = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_wavelet.pkl"))
+fname_h4b_cluster = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_cluster.pkl"))
 
 # Settings for cluster test
 tfce = dict(start=0, step=0.2)
-p_accept = 0.001
+p_accept = 0.05
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 
@@ -62,18 +60,18 @@ toi_max = 1.5
 triggers_hits_list = list(
     itertools.product(
         list(TRIGGER_CODES[0].values()),
-        ["old"],
-        ["hit"],
-        list(TRIGGER_CODES[3].values()),
+        list(TRIGGER_CODES[1].values()),
+        list(TRIGGER_CODES[2].values()),
+        ["sub_remembered"],
     )
 )
 # List of all trigger combinations for an old image
 triggers_misses_list = list(
     itertools.product(
         list(TRIGGER_CODES[0].values()),
-        ["old"],
-        ["miss"],
-        list(TRIGGER_CODES[3].values()),
+        list(TRIGGER_CODES[1].values()),
+        list(TRIGGER_CODES[2].values()),
+        ["sub_forgotten"],
     )
 )
 # %%
@@ -142,32 +140,30 @@ sensor_adjacency, ch_names_theta = find_ch_adjacency(
     epochs_complete[1].copy().info, "eeg"
 )
 # %%
-# Calculate statistical thresholds, h3a confirmed
+# Calculate statistical thresholds, h4a confirmed
 # Check overwrite
 # If there is a cluster test, and overwrite is false, load data
-threshold = stats.distributions.t.ppf(1 - p_accept, 30 - 1)
-
-if fname_h3a.exists() and not overwrite:
-    file = open(fname_h3a, "rb")
+if fname_h4a.exists() and not overwrite:
+    file = open(fname_h4a, "rb")
     clusterstats = pickle.load(file)
     file.close()
 # If overwriting is false compute everything again
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
-        threshold=threshold,
+        tfce,
         n_permutations=1000,
         adjacency=sensor_adjacency,
-        n_jobs=40
-        # stat_fun=stat_fun_hat,
+        n_jobs=40,
+        stat_fun=stat_fun_hat,
     )
-    file = open(fname_h3a, "wb")
+    file = open(fname_h4a, "wb")
     pickle.dump(clusterstats, file)
     file.close()
 
-t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = clusterstats
+t_obs_h4a, clusters_h4a, cluster_pv_h4a, h0_h4a = clusterstats
 
-significant_points_h3a = cluster_pv_h3a.reshape(t_obs_h3a.shape).T < p_accept
+significant_points_h4a = cluster_pv_h4a.reshape(t_obs_h4a.shape).T < 0.05
 
 # %%
 # Visualize the voltage, taking the average of all subjects
@@ -189,7 +185,7 @@ joint = evoked.plot_joint(
 )
 report.add_figure(
     fig=joint,
-    title="h3a",
+    title="h4a",
     caption="This figure shows a difference in voltage at image presentation."
     + "The difference is computed between old images that"
     + "have been correctly recognized as old and those that have been falsely"
@@ -200,18 +196,18 @@ report.add_figure(
 # only check tois
 # Visualize the results
 toi_evoked = evoked.copy().crop(toi_min, toi_max)
-h3a_test = toi_evoked.plot_image(
+h4a_test = toi_evoked.plot_image(
     colorbar=False,
     show=False,
-    mask=significant_points_h3a,
+    mask=significant_points_h4a,
     show_names="all",
     titles="Significant timepoints",
     **time_unit,
 )
-h3a_test.set_figheight(15)
+h4a_test.set_figheight(15)
 report.add_figure(
-    fig=h3a_test,
-    title="h3a sig",
+    fig=h4a_test,
+    title="h4a sig",
     caption="This figure shows where the difference between old and new"
     + "image presentation are significant according"
     + "to a cluster based permutation test."
@@ -223,8 +219,8 @@ report.add_figure(
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
 # If there is a wavelet file test, and overwrite is false, load data
-if fname_h3b_wavelet.exists() and not overwrite:
-    file_wavelet = open(fname_h3b_wavelet, "rb")
+if fname_h4b_wavelet.exists() and not overwrite:
+    file_wavelet = open(fname_h4b_wavelet, "rb")
     tfr_diff_list = pickle.load(file)
     file.close()
 else:
@@ -255,7 +251,7 @@ else:
             for x in epochs_complete
         ]
     )
-    file = open(fname_h3b_wavelet, "wb")
+    file = open(fname_h4b_wavelet, "wb")
     pickle.dump(tfr_diff_list, file)
     file.close()
 # %%
@@ -269,9 +265,9 @@ tfr_adjacency = mne.stats.combine_adjacency(len(freqs), tf_timepoints, sensor_ad
 # %%
 # do clusterstats
 # If there is a cluster test filse, and overwrite is false, load data
-if fname_h3b_cluster.exists() and not overwrite:
-    file_cluster = open(fname_h3b_cluster, "rb")
-    clusterstats_h3b = pickle.load(file)
+if fname_h4b_cluster.exists() and not overwrite:
+    file_cluster = open(fname_h4b_cluster, "rb")
+    clusterstats_h4b = pickle.load(file)
     file.close()
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
@@ -282,18 +278,18 @@ else:
         n_jobs=40,
         stat_fun=stat_fun_hat,
     )
-    t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
-    file_h3b_cluster = open(fname_h3b_cluster, "wb")
-    pickle.dump(clusterstats, file_h3b_cluster)
-    file_h3b_cluster.close()
-significant_points_diff_h3b = np.where(cluster_pv_diff_h3b < 0.05)[0]
+    t_obs_diff_h4b, clusters_diff_h4b, cluster_pv_diff_h4b, h0_diff_h4b = clusterstats
+    file_h4b_cluster = open(fname_h4b_cluster, "wb")
+    pickle.dump(clusterstats, file_h4b_cluster)
+    file_h4b_cluster.close()
+significant_points_diff_h4b = np.where(cluster_pv_diff_h4b < 0.05)[0]
 # %%
 # calculate average power difference
 tfr_theta_diff = np.average(tfr_diff_arr, axis=0).transpose(1, 0, 2)
-t_obs_diff_h3b_t = t_obs_diff_h3b.transpose(1, 0, 2)
+t_obs_diff_h4b_t = t_obs_diff_h4b.transpose(1, 0, 2)
 # %%
-# make h3b figure for every channel.
-h3b_test, axs = plt.subplots(
+# make h4b figure for every channel.
+h4b_test, axs = plt.subplots(
     nrows=len(ch_names_theta), ncols=2, figsize=(200, 20), constrained_layout=True
 )
 
@@ -312,7 +308,7 @@ for ch_idx in range(0, len(ch_names_theta)):
 
     plt.sca(axs[ch_idx, 1])
     plt.imshow(
-        t_obs_diff_h3b_t[:, :, ch_idx],
+        t_obs_diff_h4b_t[:, :, ch_idx],
         aspect="auto",
         origin="lower",
         extent=[toi_min, toi_max, freqs[0], freqs[-1]],
@@ -324,8 +320,8 @@ for ch_idx in range(0, len(ch_names_theta)):
 
 # add to report
 report.add_figure(
-    fig=h3b_test,
-    title="h3b sig",
+    fig=h4b_test,
+    title="h4a sig",
     caption="This figure shows where the difference in theta"
     + "power between old and new images. The first column shows "
     + "The first column shows raw power  difference, the second "
