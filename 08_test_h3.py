@@ -19,7 +19,6 @@ import sys
 from functools import partial
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import mne
 import numpy as np
 from mne.channels import find_ch_adjacency
@@ -58,7 +57,7 @@ n_cycles = freqs / 2.0  # different number of cycle per frequency
 n_cycles.round()
 # toi
 toi_min = -0.2
-toi_max = 1.5
+toi_max = 1
 # List of all trigger combinations for a new image
 triggers_hits_list = list(
     itertools.product(
@@ -160,72 +159,44 @@ else:
         adjacency=sensor_adjacency,
         n_jobs=40,
         stat_fun=stat_fun_hat,
+        out_type="mask",
     )
     file = open(fname_h3a, "wb")
     pickle.dump(clusterstats, file)
     file.close()
 
 t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = clusterstats
-
-significant_points_h3a = cluster_pv_h3a.reshape(t_obs_h3a.shape).T < p_accept
-
+sig_cluster_inds_h3a = np.where(cluster_pv_h3a < 0.01)[0]
 # %%
-# Visualize the voltage, taking the average of all subjects
-# make new object so mne plotting routines can be used
-epochs_misses_plot = list([epo[triggers_misses].average() for epo in epochs_complete])
-epochs_hits_plot = list([epo[triggers_hits].average() for epo in epochs_complete])
-# calculate difference wave
-evoked = mne.combine_evoked(
-    [mne.grand_average(epochs_misses_plot), mne.grand_average(epochs_hits_plot)],
-    weights=[1, -1],
-).crop(toi_min, toi_max)
-time_unit = dict(time_unit="s")
-# show difference wave
-joint = evoked.plot_joint(
-    title="Misses - Hits",
-    ts_args=time_unit,
-    # times=[0.3, 0.35, 0.4, 0.45, 0.5],
-    topomap_args=time_unit,
-)
-report.add_figure(
-    fig=joint,
-    title="h3a",
-    caption="This figure shows a difference in voltage at image presentation."
-    + "The difference is computed between old images that"
-    + "have been correctly recognized as old and those that have been falsely"
-    + "recognized as new. All eeg channels are shown",
-    image_format="PNG",
-)
-# Create ROIs by checking channel labels
-# only check tois
-# Visualize the results
-toi_evoked = evoked.copy().crop(toi_min, toi_max)
-h3a_test = toi_evoked.plot_image(
-    colorbar=False,
-    show=False,
-    mask=significant_points_h3a,
-    show_names="all",
-    titles="Significant timepoints",
-    **time_unit,
-)
-h3a_test.set_figheight(15)
-report.add_figure(
-    fig=h3a_test,
-    title="h3a sig",
-    caption="This figure shows where the difference between old and new"
-    + "image presentation are significant according"
-    + "to a cluster based permutation test."
-    + "Only greyscales imply that there is"
-    + "no significant difference in the time window of interest",
-    image_format="PNG",
-)
+# get cluster info
+times_min_h3a = list()
+times_max_h3a = list()
+channels_h3a = list()
+freqs_h3a = list()
+
+for i in range(0, len(sig_cluster_inds_h3a)):
+    times_min_h3a.append(
+        epochs_complete[0]
+        .crop(toi_min, toi_max)
+        .times[min(clusters_h3a[sig_cluster_inds_h3a[i]][1])]
+    )
+    times_max_h3a.append(
+        epochs_complete[0]
+        .crop(toi_min, toi_max)
+        .times[max(clusters_h3a[sig_cluster_inds_h3a[i]][1])]
+    )
+    channels_h3a.append(
+        np.array(epochs_complete[0].crop(toi_min, toi_max).ch_names)[
+            np.unique(clusters_h3a[sig_cluster_inds_h3a[i]][2])
+        ]
+    )
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
 # If there is a wavelet file test, and overwrite is false, load data
 if fname_h3b_wavelet.exists() and not overwrite:
     file_wavelet = open(fname_h3b_wavelet, "rb")
-    tfr_diff_list = pickle.load(file)
+    tfr_diff_list = pickle.load(file_wavelet)
     file.close()
 else:
     tfr_diff_list = list(
@@ -277,65 +248,22 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_diff_arr,
         threshold=threshold,
-        n_permutations=1000,
+        n_permutations=10000,
         adjacency=tfr_adjacency,
         n_jobs=40,
         stat_fun=stat_fun_hat,
     )
-    t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
     file_h3b_cluster = open(fname_h3b_cluster, "wb")
     pickle.dump(clusterstats, file_h3b_cluster)
     file_h3b_cluster.close()
-significant_points_diff_h3b = np.where(cluster_pv_diff_h3b < 0.05)[0]
-# %%
-# calculate average power difference
-tfr_theta_diff = np.average(tfr_diff_arr, axis=0).transpose(1, 0, 2)
-t_obs_diff_h3b_t = t_obs_diff_h3b.transpose(1, 0, 2)
-# %%
-# make h3b figure for every channel.
-h3b_test, axs = plt.subplots(
-    nrows=len(ch_names_theta), ncols=2, figsize=(200, 20), constrained_layout=True
-)
 
-for ch_idx in range(0, len(ch_names_theta)):
-    plt.sca(axs[ch_idx, 0])
-    plt.imshow(
-        tfr_theta_diff[:, :, ch_idx],
-        aspect="auto",
-        origin="lower",
-        extent=[toi_min, toi_max, freqs[0], freqs[-1]],
-    )
-    plt.colorbar()
-    plt.xlabel("Time (ms)")
-    plt.ylabel("Frequency (Hz)")
-    plt.title(f"Power difference new - old \n ({ch_names_theta[ch_idx]})")
-
-    plt.sca(axs[ch_idx, 1])
-    plt.imshow(
-        t_obs_diff_h3b_t[:, :, ch_idx],
-        aspect="auto",
-        origin="lower",
-        extent=[toi_min, toi_max, freqs[0], freqs[-1]],
-    )
-    plt.colorbar()
-    plt.xlabel("Time (ms)")
-    plt.ylabel("Frequency (Hz)")
-    plt.title(f"Cluster T_val difference new -old \n ({ch_names_theta[ch_idx]})")
-
-# add to report
-report.add_figure(
-    fig=h3b_test,
-    title="h3b sig",
-    caption="This figure shows where the difference in theta"
-    + "power between old and new images. The first column shows "
-    + "The first column shows raw power  difference, the second "
-    + "show the corresponding T-statistic",
-    image_format="PNG",
-)
+t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
+sig_cluster_inds_h3b = np.where(cluster_pv_diff_h3b < 0.01)[0]
 
 # %%
+# unpack cluster statistics
 # make dummy tfr for figure
-tfr_specs = tfr_morlet(
+tfr_specs_dummy = tfr_morlet(
     epochs_complete[0][triggers_hits],
     freqs,
     n_cycles=n_cycles,
@@ -344,7 +272,26 @@ tfr_specs = tfr_morlet(
     n_jobs=6,
 ).crop(toi_min, toi_max)
 
-# %% save report
-report.save(fname_report, overwrite=overwrite)
+# %%
+# get cluster info
+times_min_h3b = list()
+times_max_h3b = list()
+channels_h3b = list()
+freqs_h3b = list()
 
+for i in range(0, len(sig_cluster_inds_h3b)):
+    times_min_h3b.append(
+        tfr_specs_dummy.times[min(clusters_diff_h3b[sig_cluster_inds_h3b[i]][1])]
+    )
+    times_max_h3b.append(
+        tfr_specs_dummy.times[max(clusters_diff_h3b[sig_cluster_inds_h3b[i]][1])]
+    )
+    channels_h3b.append(
+        np.array(tfr_specs_dummy.ch_names)[
+            np.unique(clusters_diff_h3b[sig_cluster_inds_h3b[i]][2])
+        ]
+    )
+    freqs_h3b.append(
+        tfr_specs_dummy.freqs[np.unique(clusters_diff_h3b[sig_cluster_inds_h3b[i]][0])]
+    )
 # %%

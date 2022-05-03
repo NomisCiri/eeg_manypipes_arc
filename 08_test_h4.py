@@ -157,7 +157,6 @@ else:
         n_permutations=1000,
         adjacency=sensor_adjacency,
         n_jobs=40,
-        stat_fun=stat_fun_hat,
     )
     file = open(fname_h4a, "wb")
     pickle.dump(clusterstats, file)
