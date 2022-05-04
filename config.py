@@ -84,6 +84,8 @@ FNAME_BAD_EPOS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-epochs.json"
 )
 
+# H1 files
+FNAME_REPORT_H1 = FPATH_DS / "derivatives" / "report-H1.html"
 
 # Constants
 # --------------------------------------------------------------------
