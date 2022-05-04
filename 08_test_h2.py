@@ -222,7 +222,7 @@ toi_evoked = evoked.copy().crop(toi_min, toi_max)
 h2a_test = toi_evoked.plot_image(
     colorbar=False,
     show=False,
-    mask=clusters_h2a[0],
+    # mask=clusters_h2a[0],
     show_names="all",
     titles="Significant timepoints",
     **time_unit,
@@ -295,10 +295,13 @@ if fname_h2b_cluster.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_theta_diff_arr,
-        tfce,
+        threshold=threshold,
         n_permutations=10000,
         adjacency=tfr_adjacency,
+        n_jobs=6,
         stat_fun=stat_fun_hat,
+        out_type="mask",
+        tail=0,
     )
     file_h2b_cluster = open(fname_h2b_cluster, "wb")
     pickle.dump(tfr_diff_h2b_list, file_h2b_cluster)
@@ -413,10 +416,13 @@ if fname_h2c_cluster.exists() and not overwrite:
 else:
     clusterstats_h2c = spatio_temporal_cluster_1samp_test(
         tfr_alpha_diff_arr,
-        tfce,
-        n_permutations=1000,
+        threshold=threshold,
+        n_permutations=10000,
         adjacency=tfr_adjacency_alpha,
+        n_jobs=6,
         stat_fun=stat_fun_hat,
+        out_type="mask",
+        tail=0,
     )
     file_h2c_cluster = open(fname_h2c_cluster, "wb")
     pickle.dump(tfr_diff_h2c_list, file_h2c_cluster)
