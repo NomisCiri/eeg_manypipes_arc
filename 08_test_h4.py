@@ -25,7 +25,7 @@ from mne.time_frequency import tfr_morlet
 from scipy import stats
 
 from config import (
-    FNAME_HYPOTHESES_3_TEMPLATE,
+    FNAME_HYPOTHESES_4_TEMPLATE,
     FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
@@ -37,10 +37,10 @@ from utils import catch, parse_overwrite
 # Path and settings
 fpath_ds = FPATH_DS
 overwrite = True
-fname_report = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h4_report.html"))
-fname_h4a = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h4a_cluster.pkl"))
-fname_h4b_wavelet = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h4b_wavelet.pkl"))
-fname_h4b_cluster = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h4b_cluster.pkl"))
+fname_report = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4_report.html"))
+fname_h4a = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4a_cluster.pkl"))
+fname_h4b_wavelet = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_wavelet.pkl"))
+fname_h4b_cluster = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_cluster.pkl"))
 
 # Settings for cluster test
 tfce = dict(start=0, step=0.2)
