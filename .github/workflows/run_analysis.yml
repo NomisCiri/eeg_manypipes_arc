@@ -147,3 +147,7 @@ jobs:
       if: "matrix.os == 'ubuntu-latest'"
       run: |
         python 06_run_autoreject.py --sub=1 --overwrite=True
+
+    - name: Run 07_test_h1
+      run: |
+        python 07_test_h1.py
