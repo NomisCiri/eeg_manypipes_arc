@@ -25,7 +25,7 @@ from config import FNAME_EPO_CLEAN_TEMPLATE, FNAME_REPORT_H1, SUBJS
 # epochs as loaded are from -1.5 to 2.5, but this is too long for this ERP analysis
 # 1s (or up to 3s) prior to 0s is ITI, 0s to 0.5s is image presentation, then response,
 # then feedback
-crop = (-0.2, 0.5)
+crop = (-0.1, 0.3)
 
 # epochs as loaded are not yet baseline corrected, do it now
 baseline = (None, 0)
@@ -36,7 +36,8 @@ overwrite = True
 
 # clusterperm settings
 pthresh = 0.001
-thresh = stats.distributions.t.ppf(1 - pthresh, len(SUBJS) - 1)
+tail = 0  # two-tailed, see also "pthresh / 2" below
+thresh = stats.distributions.t.ppf(1 - pthresh / 2, len(SUBJS) - 1)
 nperm = 1024
 seed_H1 = 59739
 
@@ -108,7 +109,11 @@ mne.viz.plot_sensors(
 )
 
 report.add_figure(
-    fig=fig, title="Timecourse fronto-central", image_format="PNG", replace=True
+    fig=fig,
+    title="Timecourse fronto-central",
+    image_format="PNG",
+    replace=True,
+    caption="Shading = SEM",
 )
 # %%
 # Plot timecourse central
@@ -121,7 +126,13 @@ mne.viz.plot_sensors(
     info, kind="topomap", title="", sphere=100, axes=axins, show=False, pointsize=2
 )
 
-report.add_figure(fig=fig, title="Timecourse central", image_format="PNG", replace=True)
+report.add_figure(
+    fig=fig,
+    title="Timecourse central",
+    image_format="PNG",
+    replace=True,
+    caption="Shading = SEM",
+)
 
 # %%
 # Plot timecourse parieto-occipital
@@ -137,7 +148,11 @@ mne.viz.plot_sensors(
 )
 
 report.add_figure(
-    fig=fig, title="Timecourse parieto-occipital", image_format="PNG", replace=True
+    fig=fig,
+    title="Timecourse parieto-occipital",
+    image_format="PNG",
+    replace=True,
+    caption="Shading = SEM",
 )
 
 # %%
@@ -159,15 +174,81 @@ for evo1, evo2 in zip(evokeds["natural"], evokeds["man_made"]):
 
 X = np.stack(datas).transpose(0, 2, 1)
 
+# Run test only over frontal to centro-parietal channels
+ch_exclude = [
+    "Afp9",
+    "Afp10",
+    "FT7",
+    "FT8",
+    "T7",
+    "T8",
+    "M1",
+    "M2",
+    "TP7",
+    "TP8",
+    "CP5",
+    "CP6",
+    "P9",
+    "P7",
+    "P5",
+    "P3",
+    "P10",
+    "P8",
+    "P6",
+    "P4",
+    "PO7",
+    "PO3",
+    "POz",
+    "PO8",
+    "PO4",
+    "O1",
+    "Oz",
+    "O2",
+    "Iz",
+]
+spatial_exclude = [ch_names.index(i) for i in ch_exclude]
+
 # run the test
 t_obs, clusters, cluster_pv, H0 = mne.stats.spatio_temporal_cluster_1samp_test(
     X=X,
     threshold=thresh,
+    tail=tail,
     adjacency=sensor_adjacency,
     n_permutations=nperm,
     seed=seed_H1,
     out_type="mask",
+    spatial_exclude=spatial_exclude,
 )
+
+# %%
+# Plot channel values "natural" - "man_made"
+fig, axs = plt.subplots(8, 9, figsize=(20, 20), sharex=True, sharey=True)
+
+for ich in range(len(ch_names)):
+    ax = axs.flat[ich]
+
+    ax.plot(epochs.times, np.mean(X, 0)[..., ich] * 1e6)  # scale to uV
+    ax.set_title(ch_names[ich])
+
+    ax.axhline(0, color="black", lw=1, ls="--")
+    ax.axvline(0.1, color="black", lw=1, ls="--")
+
+    ys = -2.0 * (np.abs(t_obs) > thresh)[..., ich].astype(int)
+    ys[ys == 0] = np.nan
+    ax.plot(epochs.times, ys, "ro")
+
+
+sns.despine(fig)
+fig.tight_layout()
+
+report.add_figure(
+    fig=fig,
+    title="'natural' - 'man_made' per channel",
+    image_format="PNG",
+    replace=True,
+    caption=f"significance level p={pthresh} (uncorrected)",
+)
+
 
 # %%
 # Visualize significant clusters
@@ -189,7 +270,11 @@ for clu in range(sig_clusters.shape[0]):
     fig
 
     report.add_figure(
-        fig=fig, title=f"Cluster #{clu}", image_format="PNG", replace=True
+        fig=fig,
+        title=f"Cluster #{clu}",
+        image_format="PNG",
+        replace=True,
+        caption="Shading = SEM",
     )
 
 # %%
