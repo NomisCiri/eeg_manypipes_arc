@@ -36,6 +36,8 @@ conditions = ["natural", "man_made"]
 
 overwrite = True
 
+window_n1 = (0.08, 0.15)  # approximately
+
 # clusterperm settings
 pthresh = 0.001
 tail = 0  # two-tailed, see also "pthresh / 2" below
@@ -164,7 +166,7 @@ mne.viz.plot_sensors(
 
 report.add_figure(
     fig=fig,
-    title="Timecourse fronto-central",
+    title="Timecourse fronto-central group",
     image_format="PNG",
     replace=True,
     caption="Shading = SEM",
@@ -182,7 +184,7 @@ mne.viz.plot_sensors(
 
 report.add_figure(
     fig=fig,
-    title="Timecourse central",
+    title="Timecourse central group",
     image_format="PNG",
     replace=True,
     caption="Shading = SEM",
@@ -203,7 +205,7 @@ mne.viz.plot_sensors(
 
 report.add_figure(
     fig=fig,
-    title="Timecourse parieto-occipital",
+    title="Timecourse parieto-occipital group",
     image_format="PNG",
     replace=True,
     caption="Shading = SEM",
@@ -280,7 +282,8 @@ for iax, ax in enumerate(axs.flat):
         ax.remove()
         continue
 
-    ich = ch_names.index(ch_permtest[iax])
+    ch = ch_permtest[iax]
+    ich = ch_names.index(ch)
 
     df = pd.DataFrame(X[..., ich] * 1e6).T
     df["times"] = epochs.times
@@ -288,11 +291,19 @@ for iax, ax in enumerate(axs.flat):
 
     sns.lineplot(x="times", y="µV", data=df, ci=68, n_boot=100, ax=ax)
 
-    # ax.plot(epochs.times, np.mean(X, 0)[..., ich] * 1e6)  # scale to uV
-    ax.set_title(ch_names[ich])
+    title = ax.set_title(ch_names[ich])
+
+    if ch in grp_frontocentral:
+        title.set_color("blue")
+    elif ch in grp_central:
+        title.set_color("magenta")
+    elif ch in grp_parietooccipital:
+        title.set_color("green")
 
     ax.axhline(0, color="black", lw=1, ls="--")
     ax.axvline(0, color="black", lw=1, ls="--")
+
+    ax.axvspan(*window_n1, color="black", alpha=0.1)
 
     ys = -2.0 * (np.abs(t_obs) > thresh)[..., ich].astype(int)
     ys[ys == 0] = np.nan
@@ -306,8 +317,10 @@ title = (
     "(red bar shows significance)"
 )
 caption = (
-    "Only shown for channels used in cluster-permutation testing.",
-    f"Shading = SEM; Significance level p={pthresh} (uncorrected)",
+    "Only shown for channels used in cluster-permutation testing.\n"
+    f"Shading = SEM; Significance level p={pthresh} (uncorrected).\n"
+    f"Gray window marks approximate N1 window: {window_n1} (in seconds).\n"
+    "Blue channels: fronto-central group; Magenta channels: central group."
 )
 report.add_figure(
     fig=fig,
@@ -330,6 +343,7 @@ for clu in range(sig_clusters.shape[0]):
     fig, ax = plt.subplots()
     _ = mne.viz.plot_compare_evokeds(evokeds, picks=grp_sig, **kwargs_lineplot, axes=ax)
     ax.plot(epochs.times[sig_t], [ax.get_ylim()[0]] * np.sum(sig_t), "rs")
+    ax.axvspan(*window_n1, color="black", alpha=0.1)
     axins = fig.add_axes([0.75, 0.75, 0.2, 0.2])
 
     # Get t-value topography
@@ -369,7 +383,7 @@ for clu in range(sig_clusters.shape[0]):
         title=f"Cluster #{clu} (pthresh={pthresh}, two-tailed)",
         image_format="PNG",
         replace=True,
-        caption="Shading = SEM",
+        caption="Shading = SEM; Gray window marks approximate N1 window",
     )
 
 # %%
