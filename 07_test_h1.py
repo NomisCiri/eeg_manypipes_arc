@@ -39,10 +39,11 @@ overwrite = True
 window_n1 = (0.08, 0.15)  # approximately
 
 # clusterperm settings
-pthresh = 0.001
+pthresh = 0.05  # general significance alpha level
+pthresh_cluster = 0.001  # cluster forming alpha level
 tail = 0  # two-tailed, see also "pthresh / 2" below
-thresh = stats.distributions.t.ppf(1 - pthresh / 2, len(SUBJS) - 1)
-nperm = 1024
+thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
+nperm = 5000
 seed_H1 = 59739
 # Run test only over frontal to centro-parietal channels
 ch_exclude_permtest = [
@@ -255,7 +256,7 @@ X = np.stack(datas).transpose(0, 2, 1)
 spatial_exclude = [ch_names.index(i) for i in ch_exclude_permtest]
 
 # run the test
-t_obs, clusters, cluster_pv, H0 = mne.stats.spatio_temporal_cluster_1samp_test(
+t_obs, clusters, cluster_pv, _ = mne.stats.spatio_temporal_cluster_1samp_test(
     X=X,
     threshold=thresh,
     tail=tail,
@@ -333,14 +334,23 @@ report.add_figure(
 
 # %%
 # Visualize significant clusters
-sig_clusters = np.array(clusters)[cluster_pv < pthresh]
+iclu_sig = 0
+for iclu in range(len(clusters)):
 
-for clu in range(sig_clusters.shape[0]):
-    sig_t = np.any(sig_clusters[clu], axis=1)
-    sig_ch = np.any(sig_clusters[clu], axis=0)
+    # only viz significant clusters
+    pval = cluster_pv[iclu]
+    if pval >= pthresh:
+        continue
+    else:
+        iclu_sig += 1
+        # we plot
+
+    sig_t = np.any(np.array(clusters)[iclu], axis=1)
+    sig_ch = np.any(np.array(clusters)[iclu], axis=0)
     grp_sig = np.array(epochs.ch_names)[sig_ch].tolist()
 
     fig, ax = plt.subplots()
+    fig.tight_layout()
     _ = mne.viz.plot_compare_evokeds(evokeds, picks=grp_sig, **kwargs_lineplot, axes=ax)
     ax.plot(epochs.times[sig_t], [ax.get_ylim()[0]] * np.sum(sig_t), "rs")
     ax.axvspan(*window_n1, color="black", alpha=0.1)
@@ -376,11 +386,14 @@ for clu in range(sig_clusters.shape[0]):
     )
     axins.set_xlabel(xlabel)
     axins.set_title("")
-    fig.tight_layout()
 
+    title = (
+        f"Cluster #{iclu_sig}, p={pval:04} "
+        f"(cluster-forming threshold={pthresh_cluster}, two-tailed)"
+    )
     report.add_figure(
         fig=fig,
-        title=f"Cluster #{clu} (pthresh={pthresh}, two-tailed)",
+        title=title,
         image_format="PNG",
         replace=True,
         caption="Shading = SEM; Gray window marks approximate N1 window",
