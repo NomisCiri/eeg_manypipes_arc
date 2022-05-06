@@ -13,6 +13,7 @@
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
+import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
 from tqdm.auto import tqdm
@@ -40,6 +41,38 @@ tail = 0  # two-tailed, see also "pthresh / 2" below
 thresh = stats.distributions.t.ppf(1 - pthresh / 2, len(SUBJS) - 1)
 nperm = 1024
 seed_H1 = 59739
+# Run test only over frontal to centro-parietal channels
+ch_exclude_permtest = [
+    "Afp9",
+    "Afp10",
+    "FT7",
+    "FT8",
+    "T7",
+    "T8",
+    "M1",
+    "M2",
+    "TP7",
+    "TP8",
+    "CP5",
+    "CP6",
+    "P9",
+    "P7",
+    "P5",
+    "P3",
+    "P10",
+    "P8",
+    "P6",
+    "P4",
+    "PO7",
+    "PO3",
+    "POz",
+    "PO8",
+    "PO4",
+    "O1",
+    "Oz",
+    "O2",
+    "Iz",
+]
 
 # %%
 # Read all epochs and make ERPs per subj
@@ -57,6 +90,32 @@ for sub in tqdm(SUBJS):
 # %%
 # Start a report
 report = mne.Report(title="Hypothesis 1")
+
+# %%
+# Add description text to report
+html = """
+<p>There is an effect of scene category
+(i.e., a difference between images showing man-made vs. natural environments)
+on the amplitude of the N1 component,
+i.e. the first major negative EEG voltage deflection.</p>
+"""
+
+report.add_html(title="Hypothesis", html=html, replace=True)
+
+html = f"""
+<p>The following processing steps are applied (per subject):</p>
+<ol>
+<li>Epochs are loaded from disk (centered on image onset)</li>
+<li>Epochs are cropped to the range: {crop} (in seconds)</li>
+<li>Epochs are baseline corrected using: {baseline}
+("None" stands for first/last sample)</li>
+<li>Epochs are averaged to ERPs with conditions
+&quot;man_made&quot; and &quot;natural&quot;</li>
+</ol>
+<p>Below we show several plots and tests of the data.</p>
+"""
+
+report.add_html(title="Data", html=html, replace=True)
 
 # %%
 # Plot topomaps for each condition
@@ -88,12 +147,6 @@ with sns.plotting_context("talk"):
 fig.tight_layout()
 report.add_figure(fig=fig, title="Topomaps", image_format="PNG", replace=True)
 
-# %%
-# Plot sensor overview
-with plt.style.context("default"):
-    fig = epochs.plot_sensors(show_names=True, show=False)
-
-report.add_figure(fig=fig, title="Sensor overview", image_format="PNG", replace=True)
 # %%
 # Plot timecourse fronto-central
 kwargs_lineplot = dict(combine="mean", ci=0.68, show_sensors=False, show=False)
@@ -163,6 +216,28 @@ sensor_adjacency, ch_names = mne.channels.find_ch_adjacency(
     info=epochs.copy().info, ch_type="eeg"
 )
 
+# Plot sensor overview, marking those used in clusterperm
+ch_permtest = list(set(ch_names) - set(ch_exclude_permtest))
+epo_c = epochs.copy()
+epo_c.info["bads"] = ch_permtest
+fig, ax = plt.subplots()
+fig = epo_c.plot_sensors(show_names=True, show=False, axes=ax)
+
+caption = (
+    "We exclude lateral and occipital sensors, "
+    "because images were presented centrally, "
+    "and the topography suggests a frontal / central distribution for the N1."
+)
+
+report.add_figure(
+    fig=fig,
+    title="Sensor overview (those included in cluster-permutation test are marked red)",
+    image_format="PNG",
+    replace=True,
+    caption=caption,
+)
+
+
 # prepare data "X": subjects x timepoints x channels
 # where in each subject we subtracted "man_made" from "natural" ERP
 # (channels x timepoints)
@@ -174,39 +249,7 @@ for evo1, evo2 in zip(evokeds["natural"], evokeds["man_made"]):
 
 X = np.stack(datas).transpose(0, 2, 1)
 
-# Run test only over frontal to centro-parietal channels
-ch_exclude = [
-    "Afp9",
-    "Afp10",
-    "FT7",
-    "FT8",
-    "T7",
-    "T8",
-    "M1",
-    "M2",
-    "TP7",
-    "TP8",
-    "CP5",
-    "CP6",
-    "P9",
-    "P7",
-    "P5",
-    "P3",
-    "P10",
-    "P8",
-    "P6",
-    "P4",
-    "PO7",
-    "PO3",
-    "POz",
-    "PO8",
-    "PO4",
-    "O1",
-    "Oz",
-    "O2",
-    "Iz",
-]
-spatial_exclude = [ch_names.index(i) for i in ch_exclude]
+spatial_exclude = [ch_names.index(i) for i in ch_exclude_permtest]
 
 # run the test
 t_obs, clusters, cluster_pv, H0 = mne.stats.spatio_temporal_cluster_1samp_test(
@@ -222,31 +265,51 @@ t_obs, clusters, cluster_pv, H0 = mne.stats.spatio_temporal_cluster_1samp_test(
 
 # %%
 # Plot channel values "natural" - "man_made"
-fig, axs = plt.subplots(8, 9, figsize=(20, 20), sharex=True, sharey=True)
+nrows = int(np.sqrt(len(ch_permtest)))
+fig, axs = plt.subplots(
+    nrows,
+    nrows + 1,
+    figsize=(nrows * 2, nrows * 2),
+    sharex=True,
+    sharey=True,
+)
 
-for ich in range(len(ch_names)):
-    ax = axs.flat[ich]
+for iax, ax in enumerate(axs.flat):
+    if iax >= len(ch_permtest):
+        ax.remove()
+        continue
 
-    ax.plot(epochs.times, np.mean(X, 0)[..., ich] * 1e6)  # scale to uV
+    ich = ch_names.index(ch_permtest[iax])
+
+    df = pd.DataFrame(X[..., ich] * 1e6).T
+    df["times"] = epochs.times
+    df = df.melt(id_vars=["times"], var_name="subject", value_name="µV")
+
+    sns.lineplot(x="times", y="µV", data=df, ci=68, n_boot=100, ax=ax)
+
+    # ax.plot(epochs.times, np.mean(X, 0)[..., ich] * 1e6)  # scale to uV
     ax.set_title(ch_names[ich])
 
     ax.axhline(0, color="black", lw=1, ls="--")
-    ax.axvline(0.1, color="black", lw=1, ls="--")
+    ax.axvline(0, color="black", lw=1, ls="--")
 
     ys = -2.0 * (np.abs(t_obs) > thresh)[..., ich].astype(int)
     ys[ys == 0] = np.nan
     ax.plot(epochs.times, ys, "ro")
 
-
 sns.despine(fig)
 fig.tight_layout()
 
+title = (
+    "Difference waves: 'natural' - 'man_made' per channel "
+    "(red bar shows significance)"
+)
 report.add_figure(
     fig=fig,
-    title="'natural' - 'man_made' per channel",
+    title=title,
     image_format="PNG",
     replace=True,
-    caption=f"significance level p={pthresh} (uncorrected)",
+    caption=f"Shading = SEM; Significance level p={pthresh} (uncorrected)",
 )
 
 
