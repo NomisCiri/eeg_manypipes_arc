@@ -7,6 +7,8 @@ This project contains all code to reproduce the analyses of the EEG manypipes pr
 `sourcedata` and `derivatives` are stored on GIN:
 [https://gin.g-node.org/sappelhoff/eeg_manypipes_arc](https://gin.g-node.org/sappelhoff/eeg_manypipes_arc)
 
+The report for the analysis is in `REPORT.md`
+
 ## Installation
 
 To run the code, you need to install the required dependencies first.
