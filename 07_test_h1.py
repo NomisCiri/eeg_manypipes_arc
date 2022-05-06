@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm.auto import tqdm
 
 from config import FNAME_EPO_CLEAN_TEMPLATE, FNAME_REPORT_H1, SUBJS
@@ -26,7 +27,7 @@ from config import FNAME_EPO_CLEAN_TEMPLATE, FNAME_REPORT_H1, SUBJS
 # epochs as loaded are from -1.5 to 2.5, but this is too long for this ERP analysis
 # 1s (or up to 3s) prior to 0s is ITI, 0s to 0.5s is image presentation, then response,
 # then feedback
-crop = (-0.1, 0.3)
+crop = (-0.1, 0.2)
 
 # epochs as loaded are not yet baseline corrected, do it now
 baseline = (None, 0)
@@ -126,8 +127,8 @@ for condi, evoked_list in evokeds.items():
     grand_ave_evokeds[condi] = mne.grand_average(evoked_list)
 
 # N1 is relevant from about 100ms to 200ms
-times = np.arange(-0.05, 0.275, 0.05)
-average = 0.05
+times = np.arange(0.0, 0.180, 0.025)
+average = 0.01
 
 # plot both conditions in one figure: one row per condi
 fig, axs = plt.subplots(2, len(times) + 1, figsize=(8, 4))
@@ -304,12 +305,16 @@ title = (
     "Difference waves: 'natural' - 'man_made' per channel "
     "(red bar shows significance)"
 )
+caption = (
+    "Only shown for channels used in cluster-permutation testing.",
+    f"Shading = SEM; Significance level p={pthresh} (uncorrected)",
+)
 report.add_figure(
     fig=fig,
     title=title,
     image_format="PNG",
     replace=True,
-    caption=f"Shading = SEM; Significance level p={pthresh} (uncorrected)",
+    caption=caption,
 )
 
 
@@ -325,16 +330,43 @@ for clu in range(sig_clusters.shape[0]):
     fig, ax = plt.subplots()
     _ = mne.viz.plot_compare_evokeds(evokeds, picks=grp_sig, **kwargs_lineplot, axes=ax)
     ax.plot(epochs.times[sig_t], [ax.get_ylim()[0]] * np.sum(sig_t), "rs")
-    axins = fig.add_axes([0.1, 0.25, 0.2, 0.2])
-    info = epochs.copy().pick_channels(grp_sig).info
-    mne.viz.plot_sensors(
-        info, kind="topomap", title="", sphere=100, axes=axins, show=False, pointsize=2
+    axins = fig.add_axes([0.75, 0.75, 0.2, 0.2])
+
+    # Get t-value topography
+    t_map = t_obs[sig_t].mean(axis=0)
+    mask = np.zeros((t_map.shape[0], 1), dtype=bool)
+    mask[sig_ch, :] = True
+
+    # plot t-value topo
+    t_evoked = mne.EvokedArray(t_map[:, np.newaxis], epochs.info, tmin=0)
+    t_evoked.plot_topomap(
+        times=0,
+        mask=mask,
+        axes=axins,
+        cmap="Reds",
+        vmin=np.min,
+        vmax=np.max,
+        show=False,
+        colorbar=False,
+        mask_params=dict(markersize=10),
     )
-    fig
+
+    # add axes for colorbar
+    divider = make_axes_locatable(axins)
+    ax_colorbar = divider.append_axes("right", size="5%", pad=0.05)
+    image = axins.images[0]
+    plt.colorbar(image, cax=ax_colorbar)
+    xlabel = (
+        f"Averaged t-map\n({epochs.times[sig_t].min():0.3f} "
+        f"- {epochs.times[sig_t].max():0.3f} s)"
+    )
+    axins.set_xlabel(xlabel)
+    axins.set_title("")
+    fig.tight_layout()
 
     report.add_figure(
         fig=fig,
-        title=f"Cluster #{clu}",
+        title=f"Cluster #{clu} (pthresh={pthresh}, two-tailed)",
         image_format="PNG",
         replace=True,
         caption="Shading = SEM",
