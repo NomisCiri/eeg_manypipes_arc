@@ -9,6 +9,7 @@
 
 # %%
 # Imports
+import warnings
 
 import matplotlib.pyplot as plt
 import mne
@@ -93,7 +94,7 @@ for sub in tqdm(SUBJS):
 
 # %%
 # Start a report
-report = mne.Report(title="Hypothesis 1")
+report = mne.Report(title="Hypothesis 1", image_format="png")
 
 # %%
 # Add description text to report
@@ -149,7 +150,7 @@ with sns.plotting_context("talk"):
 
 
 fig.tight_layout()
-report.add_figure(fig=fig, title="Topomaps", image_format="PNG", replace=True)
+report.add_figure(fig=fig, title="Topomaps", replace=True)
 
 # %%
 # Plot timecourse fronto-central
@@ -168,7 +169,6 @@ mne.viz.plot_sensors(
 report.add_figure(
     fig=fig,
     title="Timecourse fronto-central group",
-    image_format="PNG",
     replace=True,
     caption="Shading = SEM",
 )
@@ -186,7 +186,6 @@ mne.viz.plot_sensors(
 report.add_figure(
     fig=fig,
     title="Timecourse central group",
-    image_format="PNG",
     replace=True,
     caption="Shading = SEM",
 )
@@ -207,7 +206,6 @@ mne.viz.plot_sensors(
 report.add_figure(
     fig=fig,
     title="Timecourse parieto-occipital group",
-    image_format="PNG",
     replace=True,
     caption="Shading = SEM",
 )
@@ -236,7 +234,6 @@ caption = (
 report.add_figure(
     fig=fig,
     title="Sensor overview (those included in cluster-permutation test are marked red)",
-    image_format="PNG",
     replace=True,
     caption=caption,
 )
@@ -326,7 +323,6 @@ caption = (
 report.add_figure(
     fig=fig,
     title=title,
-    image_format="PNG",
     replace=True,
     caption=caption,
 )
@@ -350,7 +346,6 @@ for iclu in range(len(clusters)):
     grp_sig = np.array(epochs.ch_names)[sig_ch].tolist()
 
     fig, ax = plt.subplots()
-    fig.tight_layout()
     _ = mne.viz.plot_compare_evokeds(evokeds, picks=grp_sig, **kwargs_lineplot, axes=ax)
     ax.plot(epochs.times[sig_t], [ax.get_ylim()[0]] * np.sum(sig_t), "rs")
     ax.axvspan(*window_n1, color="black", alpha=0.1)
@@ -386,6 +381,11 @@ for iclu in range(len(clusters)):
     )
     axins.set_xlabel(xlabel)
     axins.set_title("")
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, message="This figure includes Axes .*"
+        )
+        fig.tight_layout()
 
     title = (
         f"Cluster #{iclu_sig}, p={pval:04} "
@@ -394,9 +394,50 @@ for iclu in range(len(clusters)):
     report.add_figure(
         fig=fig,
         title=title,
-        image_format="PNG",
         replace=True,
         caption="Shading = SEM; Gray window marks approximate N1 window",
+    )
+
+# %%
+# plot clusters as image
+iclu_sig = 0
+for iclu in range(len(clusters)):
+
+    # only viz significant clusters
+    pval = cluster_pv[iclu]
+    if pval >= pthresh:
+        continue
+    else:
+        iclu_sig += 1
+        # we plot
+    clu = np.array(clusters)[iclu]
+
+    # data to plot
+    evoked = mne.EvokedArray(X.mean(axis=0).T, epochs.info, tmin=crop[0])
+    evoked.nave = X.shape[0]
+
+    # plot
+    fig, axs = plt.subplots(3, 1, figsize=(8, 14))
+
+    sel = mne.channels.make_1020_channel_selections(epochs.info)
+    axes = {sel: ax for sel, ax in zip(sel, axs.ravel())}
+    evoked.plot_image(mask=clu.T, show_names="all", axes=axes, group_by=sel, show=False)
+
+    for selname, ax in axes.items():
+        title = ax.get_title()
+        ax.set_title(title.replace("Left", selname))
+
+    fig.tight_layout()
+
+    caption = (
+        "Three panels show left, midline, and right sensors respectively. "
+        "Non-significant channel/time bins are masked in gray."
+    )
+    report.add_figure(
+        fig=fig,
+        title=f"Cluster #{iclu_sig} - image plot",
+        replace=True,
+        caption=caption,
     )
 
 # %%
