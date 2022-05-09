@@ -2,7 +2,7 @@
 #
 # To do:
 # - add "preferred-citation" once the EEGManyLabs report is published
-# - add identifier to Zenodo archive (doi) once we make the repo public and archive it
+# - add identifier to Zenodo archive (doi) once we make a release of the repo
 ---
 # Metadata for citation of this software according to the CFF format (https://citation-file-format.github.io/)
 cff-version: 1.2.0
