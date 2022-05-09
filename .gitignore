@@ -140,6 +140,7 @@ dmypy.json
 #images
 *.png
 *.pdf
+!organizer_documentation/*.pdf
 
 /data
 
