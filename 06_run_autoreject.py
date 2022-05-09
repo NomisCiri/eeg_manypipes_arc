@@ -1,7 +1,7 @@
 """Apply autoreject to the epochs and apply average reference to channels.
 
 1. Load epochs
-2. Apply autoreject (fit and transform)
+2. Apply autoreject (fit and transform), this interpolates channels
 3. Save report
 4. Apply average reference
 5. Save clean epochs
