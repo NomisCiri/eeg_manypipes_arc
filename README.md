@@ -6,7 +6,12 @@
 This project contains all code to reproduce the analyses of the
 [EEG manypipes project](https://www.eegmanypipelines.org/).
 
-This is a contribution by Stefan Appelhoff, Simon Ciranka, and Casper Kerrén
+This is a contribution by
+[Stefan Appelhoff](https://stefanappelhoff.com/),
+[Simon Ciranka](https://orcid.org/0000-0002-2067-9781),
+and Casper Kerrén from
+the Center of Adaptive Rationality
+([ARC](https://www.mpib-berlin.mpg.de/research/research-centers/adaptive-rationality))
 
 Original documentation provided by the organizers can be found in the `organizer_documentation` directory.
 
