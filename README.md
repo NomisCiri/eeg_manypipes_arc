@@ -1,10 +1,16 @@
 [![Run analysis](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml/badge.svg?branch=main&event=push)](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml)
+[![DOI](https://zenodo.org/badge/476738961.svg)](https://zenodo.org/badge/latestdoi/476738961)
 
 # eeg_manypipes_arc
 
-This project contains all code to reproduce the analyses of the EEG manypipes project
+This project contains all code to reproduce the analyses of the
+[EEG manypipes project](https://www.eegmanypipelines.org/).
 
-`sourcedata` and `derivatives` are stored on GIN:
+This is a contribution by Stefan Appelhoff, Simon Ciranka, and Casper Kerrén
+
+Original documentation provided by the organizers can be found in the `organizer_documentation` directory.
+
+`sourcedata` and `derivatives` of this project are stored on GIN:
 [https://gin.g-node.org/sappelhoff/eeg_manypipes_arc](https://gin.g-node.org/sappelhoff/eeg_manypipes_arc)
 
 The report for the analysis is in `REPORT.md`
@@ -51,53 +57,75 @@ Note that if you do not `get` all the data (step 4. above), the data that you di
 is not actually present on your system.
 There is merely a symbolic link to a remote location (GIN).
 Furthermore, the entire EEG data (even after `get`) is "read only";
-if you need to edit the files (not recommended), you can run `datalad unlock *`.
-
-## Screen the raw data
-
-To screen some subject's raw data, follow these steps:
-
-1. Activate the `emp` environment
-1. Start `ipython` from the command line (from the root of this repository)
-1. Paste the following code snippets, adjusting the `sub` variable to your liking
-1. (optional) Uncomment and adjust the "filter" comment to filter the data
-
-Note that this assumes you have already downloaded the data and added the path
-to your downloaded data to `config.py`.
-
-```python
-import mne
-from config import FPATH_DS
-from utils import get_raw_data
-sub = 1
-fpath_set = FPATH_DS / "sourcedata" / "eeg_eeglab" / f"EMP{sub:02}.set"
-raw = get_raw_data(fpath_set)
-#raw.filter(l_freq=0.1, h_freq=40)
-raw.plot(
-    block=True,
-    use_opengl=False,
-    n_channels=len(raw.ch_names),
-    bad_color="red",
-    duration=20.0,
-    clipping=None,
-)
-```
+if you need to edit or overwrite the files (not recommended), you can run `datalad unlock *`.
 
 ## Continuous integration
 
 Under `.github/workflows/run_analysis.yml` we have specified a test workflow that may be
 helpful for you to inspect.
 
+## Description of files
 
-## Run several subjs after one another
+- files unrelated to analysis
+    - `LICENSE`, detailing how our work is licensed
+    - `README.md`, the information that you currently read
+    - `setup.cfg`, a file to configure different software tools to work well with each other (black, flake8, ...)
+    - `CITATION.cff`, metadata on how to cite this code
+    - `.gitignore`, which files not to track in the version control system
+    - `environment.yml`, needed to install software dependencies (see also "Installation" above)
+    - `.pre-commit-config.yaml`, configuration for ["pre-commit hooks"](https://pre-commit.com/) that ease software development
+    - `organizer_documentation/*.pdf`, the original documentation provided by the EEG Many Pipelines project organizers
+    - `.github/workflows/run_analysis.yml`, a continuous integration workflow definition for [GitHub Actions](https://github.com/features/actions)
 
-Use something like this from a command line prompt:
+All other files are related to the analysis.
+
+- `REPORT.md`, containing four short paragraphs on the analysis of the four hypotheses
+- `config.py`, definitions of stable **variables** that are reused throughout other scripts; for example file paths
+- `utils.py`, definitions of **functions** that are reused throughout other scripts
+
+The Python script that are doing the heavy lifting have names that are prefixed with
+two integers `00`, `01`, `02`, ...
+This indicates the order in which to run the scripts.
+
+The `00` are optional to run.
+
+- `00_find_bad_subjs.py`, to find subjects to exclude from analysis based on behavioral performance (see `BAD_SUBJS` variable in `config.py`)
+- `00_inspect_raws.py`, to interactively inspect raw EEG data
+
+The preprocessing scripts are those from `01` to `06`.
+These operate on single subjects.
+
+- `01_find_bads.py`, finding bad channels using [pyprep](https://github.com/sappelhoff/pyprep)
+- `02_mark_bad_segments.py`, marking bad temporal segments using MNE-Python automatic methods
+- `03_run_ica.py`, running ICA, excluding previously found bad channels and segments
+- `04_inspect_ica.py`, find and exclude bad ICA components
+- `05_make_epochs.py`, epoch the data
+- `06_run_autoreject.py`, interpolate channels
+- `06b_check_autoreject.py`, provide a summary of interpolated channels
+
+Note that these scripts can be easily run from the command line and that you can specify
+certain arguments there (see the scripts for more detail).
+This allows running several subjects from the command line like below:
 
 ```shell
 for i in {1..33}
 do
     python -u 01_find_bads.py \
         --sub=$i \
-        --overwrite=True
+        --overwrite=True \
+        --fpath_ds="path/to/my/dataset"
 done
 ```
+
+Finally, there is one script for testing each of the four hypotheses.
+
+- `07_test_h1.py`, for hypothesis 1
+- `08_test_h2.py`, for hypothesis 2
+- `09_test_h3.py`, for hypothesis 3
+- `10_test_h4.py`, for hypothesis 4
+
+---
+
+**All outputs of these analyses are stored on GIN**
+
+[https://gin.g-node.org/sappelhoff/eeg_manypipes_arc](https://gin.g-node.org/sappelhoff/eeg_manypipes_arc)
