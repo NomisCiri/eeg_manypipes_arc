@@ -50,7 +50,7 @@ p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
-seed_H3 = 1991
+seed_H3 = 42
 nperm = 10000
 tail = 0
 
@@ -163,6 +163,7 @@ else:
         adjacency=sensor_adjacency,
         stat_fun=stat_fun_hat,
         tail=0,
+        seed=seed_H3,
     )
     file = open(fname_h3a, "wb")
     pickle.dump(clusterstats, file)
@@ -255,6 +256,7 @@ else:
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
         tail=0,
+        seed=seed_H3,
     )
     file_h3b_cluster = open(fname_h3b_cluster, "wb")
     pickle.dump(clusterstats, file_h3b_cluster)

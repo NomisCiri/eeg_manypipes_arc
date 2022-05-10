@@ -53,7 +53,7 @@ p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
-seed_H3 = 1991
+seed_H2 = 1991
 nperm = 10000
 tail = 0
 
@@ -179,6 +179,7 @@ else:
         stat_fun=stat_fun_hat,
         out_type="mask",
         tail=tail,
+        seed=seed_H2,
     )
     file = open(fname_h2a, "wb")
     pickle.dump(clusterstats, file)
@@ -311,6 +312,7 @@ else:
         stat_fun=stat_fun_hat,
         out_type="mask",
         tail=tail,
+        seed=seed_H2,
     )
     file_h2b_cluster = open(fname_h2b_cluster, "wb")
     pickle.dump(tfr_diff_h2b_list, file_h2b_cluster)
@@ -432,6 +434,7 @@ else:
         stat_fun=stat_fun_hat,
         out_type="mask",
         tail=tail,
+        seed=seed_H2,
     )
     file_h2c_cluster = open(fname_h2c_cluster, "wb")
     pickle.dump(tfr_diff_h2c_list, file_h2c_cluster)

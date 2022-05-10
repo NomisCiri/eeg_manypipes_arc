@@ -48,7 +48,7 @@ p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
-seed_H3 = 1991
+seed_H4 = 1984
 nperm = 10000
 tail = 0
 # Time frequency
@@ -168,6 +168,7 @@ else:
         n_jobs=40,
         stat_fun=stat_fun_hat,
         tail=tail,
+        seed=seed_H4,
     )
     file = open(fname_h4a, "wb")
     pickle.dump(clusterstats, file)
@@ -237,6 +238,7 @@ else:
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
         tail=tail,
+        seed=seed_H4,
     )
     file_h4b_cluster = open(fname_h4b_cluster, "wb")
     pickle.dump(clusterstats, file_h4b_cluster)
