@@ -1,0 +1,37 @@
+Hypothesis 1: There is an effect of scene category (i.e., a difference between images showing man-made vs. natural environments) on the amplitude of the N1 component, i.e. the first major negative EEG voltage deflection.
+
+Yes, there is an effect of scene category. We performed a cluster-based permutation test from -100 ms to 200 ms and over 39 frontal to parietal channels, excluding temporal and occipital channels (see supplemental material for exact channels used). The interval from -100ms to 0ms served for baseline correction of epochs. The sub-selection of channels and time was informed by previous literature on the N1 component (e.g., Luck 2014) and by inspecting grand average topography plots. The cluster-based permutation procedure was performed over the difference between ERPs of conditions “man-made” versus “natural” environments, using a one-sample t-test against zero with a two-tailed p=0.001 as the cluster-defining threshold and 5000 iterations. This resulted in three clusters significant at the conventional two-tailed threshold of p=0.05. We thus conclude that there is a significant effect of scene category. In the following we describe the three observed clusters: (i) The first observed cluster extended from approximately 75ms to 110ms over a group of five central channels with p=0.0076, (ii) The second observed cluster extended from approximately 125ms to 200ms over a group of twenty frontal channels with p=0.0002, (iii) Finally, the third observed cluster extended from approximately 125ms to 200ms over a group of 16 centro-parietal channels with p=0.0002.
+
+Hypothesis 2a: There are effects of image novelty (i.e. between images shown for the first time/new vs. repeated/old images) within the time-range from 300–500 ms on EEG voltage at fronto-central channels.
+
+tbd
+
+
+Hypothesis 2b: There are effects of image novelty (i.e. between images shown for the first time/new vs. repeated/old images) within the time-range from 300–500 ms on theta power at fronto-central channels.
+
+tbd
+
+
+Hypothesis 2c: There are effects of image novelty (i.e. between images shown for the first time/new vs. repeated/old images) within the time-range from 300–500 ms on alpha power at posterior channels.
+
+tbd
+
+
+Hypothesis 3a: There are effects of successful recognition of old images (i.e., a difference between old images correctly recognized as old [hits] vs. old images incorrectly judged as new [misses]) on EEG voltage at any channels, at any time.
+
+tbd
+
+
+Hypothesis 3b: There are effects of successful recognition of old images (i.e., a difference between old images correctly recognized as old [hits] vs. old images incorrectly judged as new [misses]) on spectral power, at any frequencies, at any channels, at any time.
+
+tbd
+
+
+Hypothesis 4a: There are effects of subsequent memory (i.e., a difference between images that will be successfully remembered vs. forgotten on a subsequent repetition) on EEG voltage at any channels, at any time.
+
+tbd
+
+
+Hypothesis 4b: There are effects of subsequent memory (i.e., a difference between images that will be successfully remembered vs. forgotten on a subsequent repetition) on spectral power, at any frequencies, at any channels, at any time.
+
+tbd
