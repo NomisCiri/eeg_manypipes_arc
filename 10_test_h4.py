@@ -44,10 +44,13 @@ fname_h4b_wavelet = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_wavelet.pkl")
 fname_h4b_cluster = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_cluster.pkl"))
 
 # Settings for cluster test
-p_accept = 0.001
-sigma = 1e-3  # sigma for the "hat" method
+pthresh = 0.05  # general significance alpha level
+pthresh_cluster = 0.001  # cluster forming alpha level
+tail = 0  # two-tailed, see also "pthresh / 2" below
+sigma = 1e-3  # sigma for the small variance correction
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
+thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
+
 seed_H4 = 1984
 nperm = 10000
 tail = 0
@@ -59,7 +62,7 @@ n_cycles.round()
 toi_min = -0.2
 toi_max = 1
 # List of all trigger combinations for a new image
-triggers_hits_list = list(
+triggers_remembered_list = list(
     itertools.product(
         list(TRIGGER_CODES[0].values()),
         list(TRIGGER_CODES[1].values()),
@@ -68,7 +71,7 @@ triggers_hits_list = list(
     )
 )
 # List of all trigger combinations for an old image
-triggers_misses_list = list(
+triggers_forgotten_list = list(
     itertools.product(
         list(TRIGGER_CODES[0].values()),
         list(TRIGGER_CODES[1].values()),
@@ -78,12 +81,13 @@ triggers_misses_list = list(
 )
 # %%
 # Makes triggercodes for subsetting the epochs
-triggers_hits = [
-    "/".join(map(str, triggers_hits_list[i])) for i in range(0, len(triggers_hits_list))
+triggers_remembered = [
+    "/".join(map(str, triggers_remembered_list[i]))
+    for i in range(0, len(triggers_remembered_list))
 ]
-triggers_misses = [
-    "/".join(map(str, triggers_misses_list[i]))
-    for i in range(0, len(triggers_misses_list))
+triggers_forgotten = [
+    "/".join(map(str, triggers_forgotten_list[i]))
+    for i in range(0, len(triggers_forgotten_list))
 ]
 # %%
 # When not in an IPython session, get command line inputs
@@ -127,12 +131,12 @@ epochs_complete = list(filter(None.__ne__, epochs))
 evokeds_diff_list = list(
     [
         np.subtract(
-            x[triggers_hits]
+            x[triggers_remembered]
             .crop(toi_min, toi_max)
             .apply_baseline(None, 0)
             .average()
             .get_data(),
-            x[triggers_misses]
+            x[triggers_forgotten]
             .crop(toi_min, toi_max)
             .apply_baseline(None, 0)
             .average()
@@ -162,7 +166,7 @@ if fname_h4a.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
-        threshold=threshold,
+        threshold=thresh,
         n_permutations=nperm,
         adjacency=sensor_adjacency,
         n_jobs=40,
@@ -175,7 +179,7 @@ else:
     file.close()
 
 t_obs_h4a, clusters_h4a, cluster_pv_h4a, h0_h4a = clusterstats
-sig_cluster_inds_h4a = np.where(cluster_pv_h4a < 0.01)[0]
+sig_cluster_inds_h4a = np.where(cluster_pv_h4a < pthresh)[0]
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
@@ -189,7 +193,7 @@ else:
         [
             np.subtract(
                 tfr_morlet(
-                    x[triggers_hits],
+                    x[triggers_remembered],
                     freqs,
                     n_cycles=n_cycles,
                     average=True,
@@ -199,7 +203,7 @@ else:
                 .crop(toi_min, toi_max)
                 .data,
                 tfr_morlet(
-                    x[triggers_misses],
+                    x[triggers_forgotten],
                     freqs,
                     n_cycles=n_cycles,
                     average=True,
@@ -233,25 +237,26 @@ if fname_h4b_cluster.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_diff_arr,
-        threshold=threshold,
+        threshold=thresh,
         n_permutations=nperm,
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
         tail=tail,
         seed=seed_H4,
+        njobs=40,
     )
     file_h4b_cluster = open(fname_h4b_cluster, "wb")
     pickle.dump(clusterstats, file_h4b_cluster)
     file_h4b_cluster.close()
 
 t_obs_diff_h4b, clusters_diff_h4b, cluster_pv_diff_h4b, h0_diff_h4b = clusterstats
-sig_cluster_inds_h4b = np.where(cluster_pv_diff_h4b < 0.01)[0]
+sig_cluster_inds_h4b = np.where(cluster_pv_diff_h4b < pthresh)[0]
 
 # %%
 # unpack cluster statistics
 # make dummy tfr for figure
 tfr_specs_dummy = tfr_morlet(
-    epochs_complete[0][triggers_hits],
+    epochs_complete[0][triggers_remembered],
     freqs,
     n_cycles=n_cycles,
     average=True,
@@ -259,26 +264,4 @@ tfr_specs_dummy = tfr_morlet(
     n_jobs=6,
 ).crop(toi_min, toi_max)
 
-# %%
-# get cluster info
-times_min_h4b = list()
-times_max_h4b = list()
-channels_h4b = list()
-freqs_h4b = list()
-
-for i in range(0, len(sig_cluster_inds_h4b)):
-    times_min_h4b.append(
-        tfr_specs_dummy.times[min(clusters_diff_h4b[sig_cluster_inds_h4b[i]][1])]
-    )
-    times_max_h4b.append(
-        tfr_specs_dummy.times[max(clusters_diff_h4b[sig_cluster_inds_h4b[i]][1])]
-    )
-    channels_h4b.append(
-        np.array(tfr_specs_dummy.ch_names)[
-            np.unique(clusters_diff_h4b[sig_cluster_inds_h4b[i]][2])
-        ]
-    )
-    freqs_h4b.append(
-        tfr_specs_dummy.freqs[np.unique(clusters_diff_h4b[sig_cluster_inds_h4b[i]][0])]
-    )
 # %%

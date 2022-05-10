@@ -49,10 +49,13 @@ fname_h2c_wavelet = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_wavelet.pkl")
 fname_h2c_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_cluster.pkl"))
 
 # Settings for cluster test
-p_accept = 0.001
-sigma = 1e-3  # sigma for the "hat" method
+# Settings for cluster test
+pthresh = 0.05  # general significance alpha level
+pthresh_cluster = 0.001  # cluster forming alpha level
+tail = 0  # two-tailed, see also "pthresh / 2" below
+sigma = 1e-3  # sigma for the small variance correction
+thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
 seed_H2 = 1991
 nperm = 10000
 tail = 0
@@ -172,7 +175,7 @@ if fname_h2a.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
-        threshold=threshold,
+        threshold=thresh,
         n_permutations=nperm,
         adjacency=sensor_adjacency,
         n_jobs=6,
@@ -305,7 +308,7 @@ if fname_h2b_cluster.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_theta_diff_arr,
-        threshold=threshold,
+        threshold=thresh,
         n_permutations=nperm,
         adjacency=tfr_adjacency,
         n_jobs=6,
@@ -319,7 +322,7 @@ else:
     file_h2b_cluster.close()
 
 t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = clusterstats
-significant_points_h2b = np.where(cluster_pv_h2b < p_accept)[0]
+significant_points_h2b = np.where(cluster_pv_h2b < pthresh)[0]
 # %%
 # calculate power difference
 tfr_theta_diff = np.average(tfr_theta_diff_arr, axis=0)
@@ -428,7 +431,7 @@ if fname_h2c_cluster.exists() and not overwrite:
 else:
     clusterstats_h2c = spatio_temporal_cluster_1samp_test(
         tfr_alpha_diff_arr,
-        threshold=threshold,
+        threshold=thresh,
         n_permutations=nperm,
         adjacency=tfr_adjacency_alpha,
         stat_fun=stat_fun_hat,
@@ -441,7 +444,7 @@ else:
     file_h2c_cluster.close()
 
 t_obs_h2c, clusters_h2c, cluster_pv_h2c, h0_h2c = clusterstats_h2c
-significant_points_h2c = np.where(cluster_pv_h2c < p_accept)[0]
+significant_points_h2c = np.where(cluster_pv_h2c < pthresh)[0]
 # %%
 # calculate power difference
 tfr_alpha_diff = np.average(tfr_alpha_diff_arr, axis=0)

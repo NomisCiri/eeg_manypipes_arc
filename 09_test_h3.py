@@ -46,13 +46,14 @@ fname_h3b_wavelet = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_wavelet.pkl")
 fname_h3b_cluster = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_cluster.pkl"))
 
 # Settings for cluster test
-p_accept = 0.001
-sigma = 1e-3  # sigma for the "hat" method
+pthresh = 0.05  # general significance alpha level
+pthresh_cluster = 0.001  # cluster forming alpha level
+tail = 0  # two-tailed, see also "pthresh / 2" below
+thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
+sigma = 1e-3  # sigma for the small variance correction
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
 seed_H3 = 42
 nperm = 10000
-tail = 0
 
 # Time frequency
 freqs = np.logspace(*np.log10([4, 100]), num=40).round()
@@ -142,9 +143,7 @@ evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
 # Concatanate conditions for use with cluster based permutation test
 # %%
 # Calculate adjacency matrix between sensors from their locations
-sensor_adjacency, ch_names_theta = find_ch_adjacency(
-    epochs_complete[1].copy().info, "eeg"
-)
+sensor_adjacency, ch_names = find_ch_adjacency(epochs_complete[1].copy().info, "eeg")
 # %%
 # Calculate statistical thresholds, h3a confirmed
 # Check overwrite
@@ -158,7 +157,7 @@ if fname_h3a.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
-        threshold=threshold,
+        threshold=thresh,
         n_permutations=nperm,
         adjacency=sensor_adjacency,
         stat_fun=stat_fun_hat,
@@ -170,30 +169,7 @@ else:
     file.close()
 
 t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = clusterstats
-sig_cluster_inds_h3a = np.where(cluster_pv_h3a < 0.01)[0]
-# %%
-# get cluster info
-times_min_h3a = list()
-times_max_h3a = list()
-channels_h3a = list()
-
-# save cluster info for writing to file
-for i in range(0, len(sig_cluster_inds_h3a)):
-    times_min_h3a.append(
-        epochs_complete[0]
-        .crop(toi_min, toi_max)
-        .times[min(clusters_h3a[sig_cluster_inds_h3a[i]][0])]
-    )
-    times_max_h3a.append(
-        epochs_complete[0]
-        .crop(toi_min, toi_max)
-        .times[max(clusters_h3a[sig_cluster_inds_h3a[i]][0])]
-    )
-    channels_h3a.append(
-        np.array(epochs_complete[0].crop(toi_min, toi_max).ch_names)[
-            np.unique(clusters_h3a[sig_cluster_inds_h3a[i]][1])
-        ]
-    )
+sig_cluster_inds_h3a = np.where(cluster_pv_h3a < pthresh)[0]
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
@@ -251,11 +227,12 @@ if fname_h3b_cluster.exists() and not overwrite:
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_diff_arr,
-        threshold=threshold,
+        threshold=thresh,
         n_permutations=10000,
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
         tail=0,
+        n_jobs=40,
         seed=seed_H3,
     )
     file_h3b_cluster = open(fname_h3b_cluster, "wb")
@@ -263,7 +240,7 @@ else:
     file_h3b_cluster.close()
 
 t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
-sig_cluster_inds_h3b = np.where(cluster_pv_diff_h3b < 0.01)[0]
+sig_cluster_inds_h3b = np.where(cluster_pv_diff_h3b < pthresh)[0]
 
 # %%
 # unpack cluster statistics
@@ -276,27 +253,3 @@ tfr_specs_dummy = tfr_morlet(
     return_itc=False,
     n_jobs=6,
 ).crop(toi_min, toi_max)
-
-# %%
-# get cluster info
-times_min_h3b = list()
-times_max_h3b = list()
-channels_h3b = list()
-freqs_h3b = list()
-
-for i in range(0, len(sig_cluster_inds_h3b)):
-    times_min_h3b.append(
-        tfr_specs_dummy.times[min(clusters_diff_h3b[sig_cluster_inds_h3b[i]][1])]
-    )
-    times_max_h3b.append(
-        tfr_specs_dummy.times[max(clusters_diff_h3b[sig_cluster_inds_h3b[i]][1])]
-    )
-    channels_h3b.append(
-        np.array(tfr_specs_dummy.ch_names)[
-            np.unique(clusters_diff_h3b[sig_cluster_inds_h3b[i]][2])
-        ]
-    )
-    freqs_h3b.append(
-        tfr_specs_dummy.freqs[np.unique(clusters_diff_h3b[sig_cluster_inds_h3b[i]][0])]
-    )
-# %%
