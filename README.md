@@ -6,6 +6,8 @@
 This project contains all code to reproduce the analyses of the
 [EEG manypipes project](https://www.eegmanypipelines.org/).
 
+It is hosted on GitHub: https://github.com/NomisCiri/eeg_manypipes_arc
+
 This is a contribution by
 [Stefan Appelhoff](https://stefanappelhoff.com/),
 [Simon Ciranka](https://orcid.org/0000-0002-2067-9781),
@@ -96,6 +98,7 @@ The `00` are optional to run.
 
 - `00_find_bad_subjs.py`, to find subjects to exclude from analysis based on behavioral performance (see `BAD_SUBJS` variable in `config.py`)
 - `00_inspect_raws.py`, to interactively inspect raw EEG data
+- `00_prepare_handin.py`, only to prepare all files for handing in for the EEGManyPipelines submission
 
 The preprocessing scripts are those from `01` to `06`.
 These operate on single subjects.
