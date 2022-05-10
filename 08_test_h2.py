@@ -51,7 +51,7 @@ tfce = dict(start=0, step=0.2)
 p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
+threshold = stats.distributions.t.ppf(1 - p_accept / 2, len(SUBJS) - 1)  # threshold
 
 # Time frequency
 n_cycles = 7
@@ -61,7 +61,7 @@ theta_freqs = np.arange(4, 7.5, 0.5)  # define frequencies of interest
 ch_fronto_central = ["FC3", "FC4", "Fz", "FC1", "FC2"]
 ch_posterior = ["POz", "PO3", "PO4", "Oz", "O1", "O2", "PO7", "PO8"]
 toi_min = 0.3
-toi_max = 0.5
+toi_max = 0.8
 # List of all trigger combinations for a new image
 triggers_new_list = list(
     itertools.product(
@@ -134,11 +134,13 @@ evokeds_diff_list = list(
         np.subtract(
             x[triggers_old]
             .crop(toi_min, toi_max)
+            .apply_baseline(None, 0)
             .pick_channels(ch_fronto_central)
             .average()
             .get_data(),
             x[triggers_new]
             .crop(toi_min, toi_max)
+            .apply_baseline(None, 0)
             .pick_channels(ch_fronto_central)
             .average()
             .get_data(),
@@ -258,6 +260,7 @@ else:
                     n_jobs=6,
                 )
                 .crop(toi_min, toi_max)
+                .apply_baseline(None, -0.1)
                 .data,
                 tfr_morlet(
                     x[triggers_old].pick_channels(ch_fronto_central),
@@ -268,6 +271,7 @@ else:
                     n_jobs=6,
                 )
                 .crop(toi_min, toi_max)
+                .apply_baseline(None, -0.1)
                 .data,
             )
             for x in epochs_complete
@@ -375,6 +379,7 @@ else:
                     n_jobs=6,
                 )
                 .crop(toi_min, toi_max)
+                .apply_baseline(None, -0.2)
                 .data,
                 tfr_morlet(
                     x[triggers_old].pick_channels(ch_posterior),
@@ -385,6 +390,7 @@ else:
                     n_jobs=6,
                 )
                 .crop(toi_min, toi_max)
+                .apply_baseline(None, -0.2)
                 .data,
             )
             for x in epochs_complete
