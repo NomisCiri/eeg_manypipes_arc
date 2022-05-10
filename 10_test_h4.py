@@ -26,6 +26,7 @@ from scipy import stats
 
 from config import (
     FNAME_HYPOTHESES_4_TEMPLATE,
+    FNAME_REPORT_H4,
     FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
@@ -37,18 +38,19 @@ from utils import catch, parse_overwrite
 # Path and settings
 fpath_ds = FPATH_DS
 overwrite = True
-fname_report = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4_report.html"))
+fname_report = FNAME_REPORT_H4
 fname_h4a = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4a_cluster.pkl"))
 fname_h4b_wavelet = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_wavelet.pkl"))
 fname_h4b_cluster = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_cluster.pkl"))
 
 # Settings for cluster test
-tfce = dict(start=0, step=0.2)
 p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-threshold = stats.distributions.t.ppf(1 - p_accept / 2, len(SUBJS) - 1)  # threshold
-
+threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
+seed_H3 = 1991
+nperm = 10000
+tail = 0
 # Time frequency
 freqs = np.logspace(*np.log10([4, 100]), num=40).round()
 n_cycles = freqs / 2.0  # different number of cycle per frequency
@@ -161,11 +163,11 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
         threshold=threshold,
-        n_permutations=10000,
+        n_permutations=nperm,
         adjacency=sensor_adjacency,
         n_jobs=40,
         stat_fun=stat_fun_hat,
-        tail=0,
+        tail=tail,
     )
     file = open(fname_h4a, "wb")
     pickle.dump(clusterstats, file)
@@ -173,29 +175,6 @@ else:
 
 t_obs_h4a, clusters_h4a, cluster_pv_h4a, h0_h4a = clusterstats
 sig_cluster_inds_h4a = np.where(cluster_pv_h4a < 0.01)[0]
-# %%
-# get cluster info
-times_min_h4a = list()
-times_max_h4a = list()
-channels_h4a = list()
-
-# save cluster info for writing to file
-for i in range(0, len(sig_cluster_inds_h4a)):
-    times_min_h4a.append(
-        epochs_complete[0]
-        .crop(toi_min, toi_max)
-        .times[min(clusters_h4a[sig_cluster_inds_h4a[i]][0])]
-    )
-    times_max_h4a.append(
-        epochs_complete[0]
-        .crop(toi_min, toi_max)
-        .times[max(clusters_h4a[sig_cluster_inds_h4a[i]][0])]
-    )
-    channels_h4a.append(
-        np.array(epochs_complete[0].crop(toi_min, toi_max).ch_names)[
-            np.unique(clusters_h4a[sig_cluster_inds_h4a[i]][1])
-        ]
-    )
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
@@ -254,11 +233,10 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_diff_arr,
         threshold=threshold,
-        n_permutations=10000,
+        n_permutations=nperm,
         adjacency=tfr_adjacency,
-        n_jobs=40,
         stat_fun=stat_fun_hat,
-        tail=0,
+        tail=tail,
     )
     file_h4b_cluster = open(fname_h4b_cluster, "wb")
     pickle.dump(clusterstats, file_h4b_cluster)

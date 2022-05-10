@@ -29,6 +29,7 @@ from scipy import stats
 
 from config import (
     FNAME_HYPOTHESES_2_TEMPLATE,
+    FNAME_REPORT_H2,
     FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
@@ -40,18 +41,21 @@ from utils import catch, parse_overwrite
 # Path and settings
 fpath_ds = FPATH_DS
 overwrite = True
-fname_report = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2_report.html"))
+fname_report = FNAME_REPORT_H2
 fname_h2a = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2a_cluster.pkl"))
 fname_h2b_wavelet = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2b_wavelet.pkl"))
 fname_h2b_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2b_cluster.pkl"))
 fname_h2c_wavelet = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_wavelet.pkl"))
 fname_h2c_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_cluster.pkl"))
+
 # Settings for cluster test
-tfce = dict(start=0, step=0.2)
 p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-threshold = stats.distributions.t.ppf(1 - p_accept / 2, len(SUBJS) - 1)  # threshold
+threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
+seed_H3 = 1991
+nperm = 10000
+tail = 0
 
 # Time frequency
 n_cycles = 7
@@ -60,7 +64,7 @@ theta_freqs = np.arange(4, 7.5, 0.5)  # define frequencies of interest
 # Roi & toi
 ch_fronto_central = ["FC3", "FC4", "Fz", "FC1", "FC2"]
 ch_posterior = ["POz", "PO3", "PO4", "Oz", "O1", "O2", "PO7", "PO8"]
-toi_min = 0.2
+toi_min = 0.3
 toi_max = 0.5
 # List of all trigger combinations for a new image
 triggers_new_list = list(
@@ -169,12 +173,12 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
         threshold=threshold,
-        n_permutations=10000,
+        n_permutations=nperm,
         adjacency=sensor_adjacency,
         n_jobs=6,
         stat_fun=stat_fun_hat,
         out_type="mask",
-        tail=0,
+        tail=tail,
     )
     file = open(fname_h2a, "wb")
     pickle.dump(clusterstats, file)
@@ -301,12 +305,12 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_theta_diff_arr,
         threshold=threshold,
-        n_permutations=10000,
+        n_permutations=nperm,
         adjacency=tfr_adjacency,
         n_jobs=6,
         stat_fun=stat_fun_hat,
         out_type="mask",
-        tail=0,
+        tail=tail,
     )
     file_h2b_cluster = open(fname_h2b_cluster, "wb")
     pickle.dump(tfr_diff_h2b_list, file_h2b_cluster)
@@ -423,12 +427,11 @@ else:
     clusterstats_h2c = spatio_temporal_cluster_1samp_test(
         tfr_alpha_diff_arr,
         threshold=threshold,
-        n_permutations=10000,
+        n_permutations=nperm,
         adjacency=tfr_adjacency_alpha,
-        n_jobs=6,
         stat_fun=stat_fun_hat,
         out_type="mask",
-        tail=0,
+        tail=tail,
     )
     file_h2c_cluster = open(fname_h2c_cluster, "wb")
     pickle.dump(tfr_diff_h2c_list, file_h2c_cluster)

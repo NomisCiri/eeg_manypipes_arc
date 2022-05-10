@@ -28,6 +28,7 @@ from scipy import stats
 
 from config import (
     FNAME_HYPOTHESES_3_TEMPLATE,
+    FNAME_REPORT_H3,
     FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
@@ -39,22 +40,25 @@ from utils import catch, parse_overwrite
 # Path and settings
 fpath_ds = FPATH_DS
 overwrite = True
-fname_report = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3_report.html"))
+fname_report = FNAME_REPORT_H3
 fname_h3a = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3a_cluster.pkl"))
 fname_h3b_wavelet = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_wavelet.pkl"))
 fname_h3b_cluster = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_cluster.pkl"))
 
 # Settings for cluster test
-tfce = dict(start=0, step=0.2)
 p_accept = 0.001
 sigma = 1e-3  # sigma for the "hat" method
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 threshold = stats.distributions.t.ppf(1 - p_accept, len(SUBJS) - 1)  # threshold
+seed_H3 = 1991
+nperm = 10000
+tail = 0
 
 # Time frequency
 freqs = np.logspace(*np.log10([4, 100]), num=40).round()
 n_cycles = freqs / 2.0  # different number of cycle per frequency
 n_cycles.round()
+
 # toi
 toi_min = -0.2
 toi_max = 1.5
@@ -155,9 +159,8 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         evokeds_diff_arr,
         threshold=threshold,
-        n_permutations=10000,
+        n_permutations=nperm,
         adjacency=sensor_adjacency,
-        n_jobs=40,
         stat_fun=stat_fun_hat,
         tail=0,
     )
@@ -250,7 +253,6 @@ else:
         threshold=threshold,
         n_permutations=10000,
         adjacency=tfr_adjacency,
-        n_jobs=40,
         stat_fun=stat_fun_hat,
         tail=0,
     )

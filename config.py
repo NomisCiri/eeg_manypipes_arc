@@ -90,6 +90,9 @@ FNAME_HYPOTHESES_4_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h4", "
 
 # H1 files
 FNAME_REPORT_H1 = FPATH_DS / "derivatives" / "report-H1.html"
+FNAME_REPORT_H2 = FPATH_DS / "derivatives" / "report-H2.html"
+FNAME_REPORT_H3 = FPATH_DS / "derivatives" / "report-H3.html"
+FNAME_REPORT_H4 = FPATH_DS / "derivatives" / "report-H4.html"
 
 # Constants
 # --------------------------------------------------------------------
