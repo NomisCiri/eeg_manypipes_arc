@@ -60,8 +60,8 @@ theta_freqs = np.arange(4, 7.5, 0.5)  # define frequencies of interest
 # Roi & toi
 ch_fronto_central = ["FC3", "FC4", "Fz", "FC1", "FC2"]
 ch_posterior = ["POz", "PO3", "PO4", "Oz", "O1", "O2", "PO7", "PO8"]
-toi_min = 0.3
-toi_max = 0.8
+toi_min = 0.2
+toi_max = 0.5
 # List of all trigger combinations for a new image
 triggers_new_list = list(
     itertools.product(
@@ -133,14 +133,14 @@ evokeds_diff_list = list(
     [
         np.subtract(
             x[triggers_old]
+            .apply_baseline(baseline=(None, 0))
             .crop(toi_min, toi_max)
-            .apply_baseline(None, 0)
             .pick_channels(ch_fronto_central)
             .average()
             .get_data(),
             x[triggers_new]
+            .apply_baseline(baseline=(None, 0))
             .crop(toi_min, toi_max)
-            .apply_baseline(None, 0)
             .pick_channels(ch_fronto_central)
             .average()
             .get_data(),
@@ -243,6 +243,8 @@ report.add_figure(
 # Hypothesis 2b.
 # Do wavelet tranformation on whole epoch to get tfr
 # If there is a wavelet file, and overwrite is false, load data
+# Note: apply baseline after TF decomposition
+# (https://www.youtube.com/watch?v=9dXG50ychsQ)
 if fname_h2b_wavelet.exists() and not overwrite:
     file_wavelet_h2b = open(fname_h2b_wavelet, "rb")
     tfr_diff_list = pickle.load(file_wavelet_h2b)
@@ -260,7 +262,6 @@ else:
                     n_jobs=6,
                 )
                 .crop(toi_min, toi_max)
-                .apply_baseline(None, -0.1)
                 .data,
                 tfr_morlet(
                     x[triggers_old].pick_channels(ch_fronto_central),
@@ -270,8 +271,8 @@ else:
                     return_itc=False,
                     n_jobs=6,
                 )
-                .crop(toi_min, toi_max)
                 .apply_baseline(None, -0.1)
+                .crop(toi_min, toi_max)
                 .data,
             )
             for x in epochs_complete
@@ -379,7 +380,6 @@ else:
                     n_jobs=6,
                 )
                 .crop(toi_min, toi_max)
-                .apply_baseline(None, -0.2)
                 .data,
                 tfr_morlet(
                     x[triggers_old].pick_channels(ch_posterior),
@@ -389,8 +389,8 @@ else:
                     return_itc=False,
                     n_jobs=6,
                 )
+                .apply_baseline(None, -0.1)
                 .crop(toi_min, toi_max)
-                .apply_baseline(None, -0.2)
                 .data,
             )
             for x in epochs_complete

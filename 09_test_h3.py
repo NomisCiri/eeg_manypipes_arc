@@ -1,7 +1,9 @@
 """Test the hypotheses specified in the instructions.
 
-There are effects of subsequent memory (i.e., a difference between images that will
-be successfully remembered vs. forgotten on a subsequent repetition) ...
+Hypotheses read:
+3. There are effects of successful recognition of old images (i.e., a difference between
+old images correctly recognized as old [hits] vs. old images incorrectly judged as new
+[misses]) ...
 a. ... on EEG voltage at any channels, at any time.
 b. ... on spectral power, at any frequencies, at any channels, at any time.
 """
@@ -25,7 +27,7 @@ from mne.time_frequency import tfr_morlet
 from scipy import stats
 
 from config import (
-    FNAME_HYPOTHESES_4_TEMPLATE,
+    FNAME_HYPOTHESES_3_TEMPLATE,
     FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
@@ -37,10 +39,10 @@ from utils import catch, parse_overwrite
 # Path and settings
 fpath_ds = FPATH_DS
 overwrite = True
-fname_report = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4_report.html"))
-fname_h4a = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4a_cluster.pkl"))
-fname_h4b_wavelet = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_wavelet.pkl"))
-fname_h4b_cluster = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_cluster.pkl"))
+fname_report = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3_report.html"))
+fname_h3a = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3a_cluster.pkl"))
+fname_h3b_wavelet = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_wavelet.pkl"))
+fname_h3b_cluster = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_cluster.pkl"))
 
 # Settings for cluster test
 tfce = dict(start=0, step=0.2)
@@ -55,23 +57,23 @@ n_cycles = freqs / 2.0  # different number of cycle per frequency
 n_cycles.round()
 # toi
 toi_min = -0.2
-toi_max = 1
+toi_max = 1.5
 # List of all trigger combinations for a new image
 triggers_hits_list = list(
     itertools.product(
         list(TRIGGER_CODES[0].values()),
-        list(TRIGGER_CODES[1].values()),
-        list(TRIGGER_CODES[2].values()),
-        "sub_remembered",
+        ["old"],
+        ["hit"],
+        list(TRIGGER_CODES[3].values()),
     )
 )
 # List of all trigger combinations for an old image
 triggers_misses_list = list(
     itertools.product(
         list(TRIGGER_CODES[0].values()),
-        list(TRIGGER_CODES[1].values()),
-        list(TRIGGER_CODES[2].values()),
-        "sub_forgotten",
+        ["old"],
+        ["miss"],
+        list(TRIGGER_CODES[3].values()),
     )
 )
 # %%
@@ -140,12 +142,12 @@ sensor_adjacency, ch_names_theta = find_ch_adjacency(
     epochs_complete[1].copy().info, "eeg"
 )
 # %%
-# Calculate statistical thresholds, h4a confirmed
+# Calculate statistical thresholds, h3a confirmed
 # Check overwrite
 # If there is a cluster test, and overwrite is false, load data
 
-if fname_h4a.exists() and not overwrite:
-    file = open(fname_h4a, "rb")
+if fname_h3a.exists() and not overwrite:
+    file = open(fname_h3a, "rb")
     clusterstats = pickle.load(file)
     file.close()
 # If overwriting is false compute everything again
@@ -157,42 +159,43 @@ else:
         adjacency=sensor_adjacency,
         n_jobs=40,
         stat_fun=stat_fun_hat,
+        tail=0,
     )
-    file = open(fname_h4a, "wb")
+    file = open(fname_h3a, "wb")
     pickle.dump(clusterstats, file)
     file.close()
 
-t_obs_h4a, clusters_h4a, cluster_pv_h4a, h0_h4a = clusterstats
-sig_cluster_inds_h4a = np.where(cluster_pv_h4a < 0.01)[0]
+t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = clusterstats
+sig_cluster_inds_h3a = np.where(cluster_pv_h3a < 0.01)[0]
 # %%
 # get cluster info
-times_min_h4a = list()
-times_max_h4a = list()
-channels_h4a = list()
+times_min_h3a = list()
+times_max_h3a = list()
+channels_h3a = list()
 
 # save cluster info for writing to file
-for i in range(0, len(sig_cluster_inds_h4a)):
-    times_min_h4a.append(
+for i in range(0, len(sig_cluster_inds_h3a)):
+    times_min_h3a.append(
         epochs_complete[0]
         .crop(toi_min, toi_max)
-        .times[min(clusters_h4a[sig_cluster_inds_h4a[i]][0])]
+        .times[min(clusters_h3a[sig_cluster_inds_h3a[i]][0])]
     )
-    times_max_h4a.append(
+    times_max_h3a.append(
         epochs_complete[0]
         .crop(toi_min, toi_max)
-        .times[max(clusters_h4a[sig_cluster_inds_h4a[i]][0])]
+        .times[max(clusters_h3a[sig_cluster_inds_h3a[i]][0])]
     )
-    channels_h4a.append(
+    channels_h3a.append(
         np.array(epochs_complete[0].crop(toi_min, toi_max).ch_names)[
-            np.unique(clusters_h4a[sig_cluster_inds_h4a[i]][1])
+            np.unique(clusters_h3a[sig_cluster_inds_h3a[i]][1])
         ]
     )
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
 # If there is a wavelet file test, and overwrite is false, load data
-if fname_h4b_wavelet.exists() and not overwrite:
-    file_wavelet = open(fname_h4b_wavelet, "rb")
+if fname_h3b_wavelet.exists() and not overwrite:
+    file_wavelet = open(fname_h3b_wavelet, "rb")
     tfr_diff_list = pickle.load(file_wavelet)
     file.close()
 else:
@@ -223,7 +226,7 @@ else:
             for x in epochs_complete
         ]
     )
-    file = open(fname_h4b_wavelet, "wb")
+    file = open(fname_h3b_wavelet, "wb")
     pickle.dump(tfr_diff_list, file)
     file.close()
 # %%
@@ -237,9 +240,9 @@ tfr_adjacency = mne.stats.combine_adjacency(len(freqs), tf_timepoints, sensor_ad
 # %%
 # do clusterstats
 # If there is a cluster test filse, and overwrite is false, load data
-if fname_h4b_cluster.exists() and not overwrite:
-    file_cluster = open(fname_h4b_cluster, "rb")
-    clusterstats_h4b = pickle.load(file)
+if fname_h3b_cluster.exists() and not overwrite:
+    file_cluster = open(fname_h3b_cluster, "rb")
+    clusterstats_h3b = pickle.load(file)
     file.close()
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
@@ -249,13 +252,14 @@ else:
         adjacency=tfr_adjacency,
         n_jobs=40,
         stat_fun=stat_fun_hat,
+        tail=0,
     )
-    file_h4b_cluster = open(fname_h4b_cluster, "wb")
-    pickle.dump(clusterstats, file_h4b_cluster)
-    file_h4b_cluster.close()
+    file_h3b_cluster = open(fname_h3b_cluster, "wb")
+    pickle.dump(clusterstats, file_h3b_cluster)
+    file_h3b_cluster.close()
 
-t_obs_diff_h4b, clusters_diff_h4b, cluster_pv_diff_h4b, h0_diff_h4b = clusterstats
-sig_cluster_inds_h4b = np.where(cluster_pv_diff_h4b < 0.01)[0]
+t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
+sig_cluster_inds_h3b = np.where(cluster_pv_diff_h3b < 0.01)[0]
 
 # %%
 # unpack cluster statistics
@@ -271,24 +275,24 @@ tfr_specs_dummy = tfr_morlet(
 
 # %%
 # get cluster info
-times_min_h4b = list()
-times_max_h4b = list()
-channels_h4b = list()
-freqs_h4b = list()
+times_min_h3b = list()
+times_max_h3b = list()
+channels_h3b = list()
+freqs_h3b = list()
 
-for i in range(0, len(sig_cluster_inds_h4b)):
-    times_min_h4b.append(
-        tfr_specs_dummy.times[min(clusters_diff_h4b[sig_cluster_inds_h4b[i]][1])]
+for i in range(0, len(sig_cluster_inds_h3b)):
+    times_min_h3b.append(
+        tfr_specs_dummy.times[min(clusters_diff_h3b[sig_cluster_inds_h3b[i]][1])]
     )
-    times_max_h4b.append(
-        tfr_specs_dummy.times[max(clusters_diff_h4b[sig_cluster_inds_h4b[i]][1])]
+    times_max_h3b.append(
+        tfr_specs_dummy.times[max(clusters_diff_h3b[sig_cluster_inds_h3b[i]][1])]
     )
-    channels_h4b.append(
+    channels_h3b.append(
         np.array(tfr_specs_dummy.ch_names)[
-            np.unique(clusters_diff_h4b[sig_cluster_inds_h4b[i]][2])
+            np.unique(clusters_diff_h3b[sig_cluster_inds_h3b[i]][2])
         ]
     )
-    freqs_h4b.append(
-        tfr_specs_dummy.freqs[np.unique(clusters_diff_h4b[sig_cluster_inds_h4b[i]][0])]
+    freqs_h3b.append(
+        tfr_specs_dummy.freqs[np.unique(clusters_diff_h3b[sig_cluster_inds_h3b[i]][0])]
     )
 # %%
