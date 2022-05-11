@@ -11,7 +11,6 @@
 # %%
 # Imports
 import itertools
-import os
 import pickle
 import sys
 from functools import partial
@@ -25,6 +24,7 @@ from mne.time_frequency import tfr_morlet
 from scipy import stats
 
 from config import (
+    FNAME_EPO_CLEAN_TEMPLATE,
     FNAME_HYPOTHESES_3_TEMPLATE,
     FNAME_REPORT_H3,
     FPATH_DS,
@@ -53,7 +53,6 @@ stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 nperm = 10000
 seed_H3 = 42
 
-
 # Time frequency
 freqs = np.logspace(*np.log10([4, 100]), num=40).round()
 n_cycles = freqs / 2.0  # different number of cycle per frequency
@@ -62,6 +61,7 @@ n_cycles.round()
 # toi
 toi_min = -0.2
 toi_max = 1.5
+
 # List of all trigger combinations for a new image
 triggers_hits_list = list(
     itertools.product(
@@ -80,6 +80,7 @@ triggers_misses_list = list(
         list(TRIGGER_CODES[3].values()),
     )
 )
+
 # %%
 # Makes triggercodes for subsetting the epochs
 triggers_hits = [
@@ -89,6 +90,7 @@ triggers_misses = [
     "/".join(map(str, triggers_misses_list[i]))
     for i in range(0, len(triggers_misses_list))
 ]
+
 # %%
 # When not in an IPython session, get command line inputs
 # https://docs.python.org/3/library/sys.html#sys.ps1
@@ -104,26 +106,20 @@ if not hasattr(sys, "ps1"):
 # Check overwrite
 if fname_report.exists() and not overwrite:
     raise RuntimeError(OVERWRITE_MSG.format(fname_report))
+
 # %%
 # Start a report to save figures
-report = mne.Report(title="Hypotheses 3")
+report = mne.Report(title="Hypothesis 3")
+
 # %%
 # Reads in all epochs
 epochs = [
-    catch(
-        lambda: mne.read_epochs(
-            fname=os.path.join(
-                str(fpath_ds),
-                "derivatives",
-                f"EMP{sub:02}",
-                f"EMP{sub:02}_clean-epo.fif.gz",
-            )
-        )
-    )
+    catch(lambda: mne.read_epochs(fname=FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)))
     for sub in SUBJS
 ]
 #  Keep only existing subs
 epochs_complete = list(filter(None.__ne__, epochs))
+
 # %%
 # Get a list of epochs in the desired timerange and with the desired channels.
 # already put it into the format needed for permutation test
@@ -169,6 +165,7 @@ else:
         pickle.dump(clusterstats, fout)
 
 t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = clusterstats
+
 sig_cluster_inds_h3a = np.where(cluster_pv_h3a < pthresh)[0]
 # %%
 # Hypothesis 3b.
@@ -212,10 +209,12 @@ else:
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs),freq, time, n_vertices (channels)).
 tfr_diff_arr = np.stack(tfr_diff_list, axis=2).transpose(2, 1, 3, 0)
+
 # %%
 # Make sensor-frequency adjacancy matrix
 tf_timepoints = tfr_diff_arr.shape[2]
 tfr_adjacency = mne.stats.combine_adjacency(len(freqs), tf_timepoints, sensor_adjacency)
+
 # %%
 # do clusterstats
 # If there is a cluster test filse, and overwrite is false, load data
@@ -231,7 +230,7 @@ else:
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
         tail=tail,
-        n_jobs=40,
+        n_jobs=6,
         seed=seed_H3,
     )
     with open(fname_h3b_cluster, "wb") as fout:

@@ -11,7 +11,6 @@
 # %%
 # Imports
 import itertools
-import os
 import pickle
 import sys
 from functools import partial
@@ -25,6 +24,7 @@ from mne.time_frequency import tfr_morlet
 from scipy import stats
 
 from config import (
+    FNAME_EPO_CLEAN_TEMPLATE,
     FNAME_HYPOTHESES_4_TEMPLATE,
     FNAME_REPORT_H4,
     FPATH_DS,
@@ -103,22 +103,15 @@ if not hasattr(sys, "ps1"):
 # Check overwrite
 if fname_report.exists() and not overwrite:
     raise RuntimeError(OVERWRITE_MSG.format(fname_report))
+
 # %%
 # Start a report to save figures
-report = mne.Report(title="Hypotheses 3")
+report = mne.Report(title="Hypothesis 4")
+
 # %%
 # Reads in all epochs
 epochs = [
-    catch(
-        lambda: mne.read_epochs(
-            fname=os.path.join(
-                str(fpath_ds),
-                "derivatives",
-                f"EMP{sub:02}",
-                f"EMP{sub:02}_clean-epo.fif.gz",
-            )
-        )
-    )
+    catch(lambda: mne.read_epochs(fname=FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)))
     for sub in SUBJS
 ]
 #  Keep only existing subs
@@ -153,7 +146,7 @@ sensor_adjacency, ch_names_theta = find_ch_adjacency(
     epochs_complete[1].copy().info, "eeg"
 )
 # %%
-# Calculate statistical thresholds, h4a confirmed
+# Calculate statistical thresholds
 # Check overwrite
 # If there is a cluster test, and overwrite is false, load data
 
@@ -168,7 +161,7 @@ else:
         threshold=thresh,
         n_permutations=nperm,
         adjacency=sensor_adjacency,
-        n_jobs=40,
+        n_jobs=6,
         stat_fun=stat_fun_hat,
         tail=tail,
         seed=seed_H4,
@@ -178,6 +171,7 @@ else:
 
 t_obs_h4a, clusters_h4a, cluster_pv_h4a, h0_h4a = clusterstats
 sig_cluster_inds_h4a = np.where(cluster_pv_h4a < pthresh)[0]
+
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
@@ -221,10 +215,12 @@ else:
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs),freq, time, n_vertices (channels)).
 tfr_diff_arr = np.stack(tfr_diff_list, axis=2).transpose(2, 1, 3, 0)
+
 # %%
 # Make sensor-frequency adjacancy matrix
 tf_timepoints = tfr_diff_arr.shape[2]
 tfr_adjacency = mne.stats.combine_adjacency(len(freqs), tf_timepoints, sensor_adjacency)
+
 # %%
 # do clusterstats
 # If there is a cluster test filse, and overwrite is false, load data
