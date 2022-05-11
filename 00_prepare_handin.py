@@ -34,7 +34,7 @@ import os
 import subprocess
 from pathlib import Path
 
-import datalad.api as datalad
+from tqdm.auto import tqdm
 
 from config import (
     BAD_SUBJS,
@@ -179,21 +179,25 @@ files = {
     "d": [FNAME_AR_PLOT_TEMPLATE, FNAME_BADS_TEMPLATE],
 }
 
-for sub in SUBJS[:1]:
+for sub in tqdm(SUBJS):
 
     for job in "abcd":
-        folder = folders[job]
+        folder = Path(folders[job].format(sub=sub))
         file_list = files[job]
 
         # Create folder
-        Path(folder.format(sub=sub)).mkdir(parents=True, exist_ok=True)
+        folder.mkdir(parents=True, exist_ok=True)
 
         # Copy files
         for file in file_list:
             src = file.format(sub=sub)
-            dest = src.replace(str(fpath_ds), str(data_dir))
+            dest = str(folder / Path(src).name)
 
-            datalad.run(cmd=f"cp --archive {src} {dest}", inputs=src)
-
+            # datalad.run(cmd=f"cp --archive {src} {dest}", inputs=src)
+            result = subprocess.run(
+                ["cp", "--dereference", "--no-preserve=mode", src, dest],
+                check=True,
+                stdout=subprocess.PIPE,
+            )
 
 # %%
