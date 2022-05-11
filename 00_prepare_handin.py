@@ -30,7 +30,9 @@ NOTE: For copying files, we need to "unlock" via DataLad
 """
 # %%
 # Imports
+import os
 import subprocess
+from pathlib import Path
 
 from config import BAD_SUBJS, FPATH_DS, SUBJS
 
@@ -42,6 +44,14 @@ handin_dir = fpath_ds.parent / "EMP_hand_in"
 scripts_dir = handin_dir / "Scripts"
 data_dir = handin_dir / "Data"
 
+cwd = os.getcwd()
+# subj folder templates
+template_3a = os.path.join(
+    str(data_dir), "EMP{sub:02}", "Pre-processed time series data"
+)
+template_3b = os.path.join(str(data_dir), "EMP{sub:02}", "Removed ICA components")
+template_3c = os.path.join(str(data_dir), "EMP{sub:02}", "Excluded trials")
+template_3d = os.path.join(str(data_dir), "EMP{sub:02}", "Excluded sensors")
 
 # %%
 # Create directories for handing in files
@@ -54,12 +64,25 @@ data_dir.mkdir(exist_ok=True)
 repo = "https://github.com/NomisCiri/eeg_manypipes_arc.git"
 dest = str(scripts_dir)
 
+clone_failed = False
 try:
-    subprocess.run(
+    result = subprocess.run(
         ["git", "clone", repo, dest], check=True, stdout=subprocess.PIPE
-    ).stdout
+    )
 except subprocess.CalledProcessError:
+    clone_failed = True
     print(f"Error when cloning from {repo}. Assuming the folder already exists.")
+
+if clone_failed:
+    # try pull
+    print("\nTrying to pull new updates.")
+    os.chdir(dest)
+    result = subprocess.run(
+        ["git", "pull"], check=True, stdout=subprocess.PIPE, text=True
+    )
+    print(result.stdout)
+
+    os.chdir(cwd)
 
 # %%
 # Create general README
@@ -78,7 +101,7 @@ For more information see the following files in the supplied scripts:
 - `06b_check_autoreject.py`
 - The `BAD_SUBJS` variable defined in `config.py`
 
-Description of subject-specific folders.
+Description of subject-specific folders:
 
 1. Pre-processed time series data
 ---------------------------------
@@ -109,7 +132,6 @@ raw data that were excluded from ICA decomposition, **before** epoching.
 NOTE: These segments were treated as normal during pre-processing after
 ICA. They were only excluded for ICA fitting.
 
-
 4. Excluded sensors
 -------------------
 
@@ -131,4 +153,11 @@ with open(handin_dir / "README.txt", "w") as fout:
 # %%
 # Create subject folders
 for sub in SUBJS[:1]:
-    pass
+
+    # Create folder for this subj
+    Path(template_3a.format(sub=sub)).mkdir(parents=True, exist_ok=True)
+    Path(template_3b.format(sub=sub)).mkdir(parents=True, exist_ok=True)
+    Path(template_3c.format(sub=sub)).mkdir(parents=True, exist_ok=True)
+    Path(template_3d.format(sub=sub)).mkdir(parents=True, exist_ok=True)
+
+# %%
