@@ -26,7 +26,6 @@ from config import (
     FNAME_ICA_TEMPLATE,
     FNAME_SEGMENTS_TEMPLATE,
     FPATH_DS,
-    NOTCH_FREQS,
     OVERWRITE_MSG,
     PATH_NOT_FOUND_MSG,
     SUBJS,
@@ -103,10 +102,9 @@ else:
     logger.info("File on bad segments not found. Did you run 02_mark_bad_segments.py?")
 
 # %%
-# filter
+# highpass filter
 raw.load_data()
 raw = raw.filter(l_freq=1.0, h_freq=None)
-raw = raw.notch_filter(freqs=NOTCH_FREQS)
 
 # %%
 # Downsample, to speed up ICA
