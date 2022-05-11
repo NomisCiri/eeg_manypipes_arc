@@ -18,12 +18,11 @@ from config import (
 
 # %%
 # Filepaths and settings
-fpath_ds = FPATH_DS
 overwrite = True
 
 # %%
 # Check overwrite
-fname_autoreject_outputs = fpath_ds / "derivatives" / "autoreject_outputs.tsv"
+fname_autoreject_outputs = FPATH_DS / "derivatives" / "autoreject_outputs.tsv"
 if fname_autoreject_outputs.exists() and not overwrite:
     raise RuntimeError(OVERWRITE_MSG.format(fname_autoreject_outputs))
 

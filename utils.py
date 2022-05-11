@@ -1,6 +1,5 @@
 """General utility functions that are re-used in different scripts."""
 import warnings
-from pathlib import Path
 
 import click
 import mne
@@ -11,12 +10,10 @@ from config import TRIGGER_CODES
 
 @click.command()
 @click.option("--sub", type=int, help="Subject number")
-@click.option("--fpath_ds", type=str, help="Data location")
 @click.option("--overwrite", default=False, type=bool, help="Overwrite?")
 @click.option("--interactive", default=False, type=bool, help="Interactive?")
 def get_inputs(
     sub,
-    fpath_ds,
     overwrite,
     interactive,
 ):
@@ -26,13 +23,9 @@ def get_inputs(
     --------
     parse_overwrite
     """
-    # strs to pathlib.Path
-    fpath_ds = Path(fpath_ds) if fpath_ds else None
-
     # collect all in dict
     inputs = dict(
         sub=sub,
-        fpath_ds=fpath_ds,
         overwrite=overwrite,
         interactive=interactive,
     )

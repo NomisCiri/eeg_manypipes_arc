@@ -27,6 +27,7 @@ from config import (
     FNAME_COMPONENTS_TEMPLATE,
     FNAME_ICA_RAW_TEMPLATE,
     FNAME_ICA_TEMPLATE,
+    FNAME_RAW_SET_TEMPLATE,
     FNAME_REPORT_ICA_TEMPLATE,
     FNAME_SEGMENTS_TEMPLATE,
     FPATH_DS,
@@ -40,7 +41,6 @@ from utils import get_raw_data, parse_overwrite
 # Filepaths and settings
 
 sub = 1
-fpath_ds = FPATH_DS
 overwrite = True
 interactive = True
 
@@ -53,22 +53,19 @@ accept_automatic = False
 # When not in an IPython session, get command line inputs
 # https://docs.python.org/3/library/sys.html#sys.ps1
 if not hasattr(sys, "ps1"):
-    defaults = dict(
-        sub=sub, fpath_ds=fpath_ds, overwrite=overwrite, interactive=interactive
-    )
+    defaults = dict(sub=sub, overwrite=overwrite, interactive=interactive)
 
     defaults = parse_overwrite(defaults)
 
     sub = defaults["sub"]
-    fpath_ds = defaults["fpath_ds"]
     overwrite = defaults["overwrite"]
     interactive = defaults["interactive"]
 
 # Check inputs after potential overwriting
 if sub not in SUBJS:
     raise ValueError(f"'{sub}' is not a valid subject ID.\nUse: {SUBJS}")
-if not fpath_ds.exists():
-    raise RuntimeError(PATH_NOT_FOUND_MSG.format(fpath_ds))
+if not FPATH_DS.exists():
+    raise RuntimeError(PATH_NOT_FOUND_MSG.format(FPATH_DS))
 if overwrite:
     logger.info("`overwrite` is set to ``True``.")
 
@@ -92,8 +89,7 @@ report = mne.Report(title=f"ICA, subject {sub}")
 
 # %%
 # Get raw data
-fpath_set = fpath_ds / "sourcedata" / "eeg_eeglab" / f"EMP{sub:02}.set"
-raw = get_raw_data(fpath_set)
+raw = get_raw_data(FNAME_RAW_SET_TEMPLATE.format(sub=sub))
 raw.load_data()
 
 # %%

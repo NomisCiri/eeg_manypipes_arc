@@ -15,17 +15,19 @@ analysis.
 import pandas as pd
 from scipy import stats
 
-from config import FPATH_DS, OVERWRITE_MSG
+from config import FNAME_EVENTS_TEMPLATE, FPATH_DS, OVERWRITE_MSG, PATH_NOT_FOUND_MSG
 
 # %%
 # Filepaths and settings
 rejection_threshold = 0.6  # dprime threshold used to exclude participants
-fpath_ds = FPATH_DS
 overwrite = True
+
+if not FPATH_DS.exists():
+    raise RuntimeError(PATH_NOT_FOUND_MSG.format(FPATH_DS))
 
 # %%
 # Check overwrite
-fname_bad_subjs = fpath_ds / "derivatives" / "bad_subjs.tsv"
+fname_bad_subjs = FPATH_DS / "derivatives" / "bad_subjs.tsv"
 if fname_bad_subjs.exists() and not overwrite:
     raise RuntimeError(OVERWRITE_MSG.format(fname_bad_subjs))
 
@@ -81,7 +83,7 @@ subj_exclude_dprime = []
 subj_exclude_binom = []
 
 for sub in range(1, 34):
-    fpath_csv = fpath_ds / "sourcedata" / "events" / f"EMP{sub:02}_events.csv"
+    fpath_csv = FNAME_EVENTS_TEMPLATE.format(sub=sub)
     df_beh = pd.read_csv(fpath_csv)
     # check if correct response was given
     df_beh = df_beh.assign(

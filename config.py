@@ -34,6 +34,10 @@ elif "runner" in home:
 else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
 
+# The raw data in .set format
+FNAME_RAW_SET_TEMPLATE = os.path.join(
+    str(FPATH_DS), "sourcedata", "eeg_eeglab", "EMP{sub:02}.set"
+)
 # The original events.csv files
 FNAME_EVENTS_TEMPLATE = os.path.join(
     str(FPATH_DS), "sourcedata", "events", "EMP{sub:02}_events.csv"

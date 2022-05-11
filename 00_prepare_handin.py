@@ -47,14 +47,17 @@ from config import (
     FNAME_REPORT_ICA_TEMPLATE,
     FNAME_SEGMENTS_TEMPLATE,
     FPATH_DS,
+    PATH_NOT_FOUND_MSG,
     SUBJS,
 )
 
 # %%
 # Filepaths and settings
-fpath_ds = FPATH_DS
 
-handin_dir = fpath_ds.parent / "EMP_hand_in"
+if not FPATH_DS.exists():
+    raise RuntimeError(PATH_NOT_FOUND_MSG.format(FPATH_DS))
+
+handin_dir = FPATH_DS.parent / "EMP_hand_in"
 scripts_dir = handin_dir / "Scripts"
 data_dir = handin_dir / "Data"
 
