@@ -1,5 +1,8 @@
 """Find subjects who did not perform well in the task.
 
+NOTE: You can run this script at any time and use the outputs to inform the
+      `BAD_SUBJS` variable in `config.py`
+
 Use signal detection theory to calculate sensitvity index d' (D prime),
 and additionally calculate a binomial test of accuracy data against chance
 level.
