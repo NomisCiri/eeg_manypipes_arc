@@ -158,16 +158,16 @@ jobs:
       # Always skip: we would need to download data of all subjects
       if: false
       run: |
-        python 08_test_h2.py --overwrite=True
+        python 08_test_h2.py
 
     - name: Run 09_test_h3
       # Always skip: we would need to download data of all subjects
       if: false
       run: |
-        python 09_test_h3.py --overwrite=True
+        python 09_test_h3.py
 
     - name: Run 10_test_h4
       # Always skip: we would need to download data of all subjects
       if: false
       run: |
-        python 10_test_h4.py --overwrite=True
+        python 10_test_h4.py

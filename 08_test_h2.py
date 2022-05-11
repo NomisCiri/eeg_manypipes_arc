@@ -1,19 +1,17 @@
 """Test the hypotheses specified in the instructions.
 
-Hypotheses read:
-There are effects of image novelty (i.e., between images shown for the first time/new
-vs. repeated/old images) within the time-range from 300–500 ms ...
-a. ... on EEG voltage at fronto-central channels.
-b. ... on theta power at fronto-central channels.
-c. ... on alpha power at posterior channels.
+> There are effects of image novelty
+> (i.e., between images shown for the first time/new vs. repeated/old images)
+> within the time-range from 300-500 ms ...
+> a. ... on EEG voltage at fronto-central channels.
+> b. ... on theta power at fronto-central channels.
+> c. ... on alpha power at posterior channels.
+
 """
-
-
-import itertools
 
 # %%
 # Imports
-import os
+import itertools
 import pickle
 import sys
 from functools import partial
@@ -28,18 +26,17 @@ from mne.time_frequency import tfr_morlet
 from scipy import stats
 
 from config import (
+    FNAME_EPO_CLEAN_TEMPLATE,
     FNAME_HYPOTHESES_2_TEMPLATE,
     FNAME_REPORT_H2,
-    FPATH_DS,
     OVERWRITE_MSG,
     SUBJS,
     TRIGGER_CODES,
 )
-from utils import catch, parse_overwrite
+from utils import parse_overwrite
 
 # %%
-# Path and settings
-fpath_ds = FPATH_DS
+# Filepaths and settings
 overwrite = True
 fname_report = FNAME_REPORT_H2
 fname_h2a = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2a_cluster.pkl"))
@@ -49,16 +46,14 @@ fname_h2c_wavelet = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_wavelet.pkl")
 fname_h2c_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_cluster.pkl"))
 
 # Settings for cluster test
-# Settings for cluster test
 pthresh = 0.05  # general significance alpha level
 pthresh_cluster = 0.001  # cluster forming alpha level
 tail = 0  # two-tailed, see also "pthresh / 2" below
 sigma = 1e-3  # sigma for the small variance correction
 thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-seed_H2 = 1991
 nperm = 10000
-tail = 0
+seed_H2 = 1991
 
 # Time frequency
 n_cycles = 7
@@ -92,20 +87,20 @@ triggers_old_list = list(
 # https://docs.python.org/3/library/sys.html#sys.ps1
 if not hasattr(sys, "ps1"):
     defaults = dict(
-        fpath_ds=fpath_ds,
         overwrite=overwrite,
     )
     defaults = parse_overwrite(defaults)
-    fpath_ds = defaults["fpath_ds"]
     overwrite = defaults["overwrite"]
+
 # %%
 # Check overwrite
-fname_report = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2"))
 if fname_report.exists() and not overwrite:
     raise RuntimeError(OVERWRITE_MSG.format(fname_report))
+
 # %%
 # Start a report to save figures
-report = mne.Report(title="Hypotheses 2")
+report = mne.Report(title="Hypothesis 2")
+
 # %%
 # Makes triggercodes for subsetting the epochs
 triggers_new = [
@@ -117,23 +112,15 @@ triggers_old = [
 # %%
 # Reads in all epochs
 epochs = [
-    catch(
-        lambda: mne.read_epochs(
-            fname=os.path.join(
-                str(fpath_ds),
-                "derivatives",
-                f"EMP{sub:02}",
-                f"EMP{sub:02}_clean-epo.fif.gz",
-            )
-        )
-    )
-    for sub in SUBJS
+    mne.read_epochs(fname=FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)) for sub in SUBJS
 ]
+
 # %%
 #  Keep only existing subs
 epochs_complete = list(filter(None.__ne__, epochs))
+
 # %%
-# Get a list of epochs in the desired timerange and with the desired channels.
+# Get a list of epochs in the desired time range and with the desired channels.
 # already put it into the format needed for permutation test
 # required format: (n_observations (subs), time, n_vertices (channels)).
 evokeds_diff_list = list(
@@ -156,21 +143,22 @@ evokeds_diff_list = list(
     ]
 )
 # add list elements along array axis and reshape for permutation test
-evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
 # Concatanate conditions for use with cluster based permutation test
+evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
+
 # %%
 # Calculate adjacency matrix between sensors from their locations
 sensor_adjacency, ch_names = find_ch_adjacency(
     epochs_complete[1].copy().pick_channels(ch_fronto_central).info, "eeg"
 )
 # %%
-# Calculate statistical thresholds, h3a confirmed
+# Calculate statistical thresholds
 # Check overwrite
 # If there is a cluster test, and overwrite is false, load data
 if fname_h2a.exists() and not overwrite:
-    file = open(fname_h2a, "rb")
-    clusterstats = pickle.load(file)
-    file.close()
+    with open(fname_h2a, "rb") as fin:
+        clusterstats = pickle.load(fin)
+
 # If overwriting is false compute everything again
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
@@ -184,13 +172,12 @@ else:
         tail=tail,
         seed=seed_H2,
     )
-    file = open(fname_h2a, "wb")
-    pickle.dump(clusterstats, file)
-    file.close()
+    with open(fname_h2a, "wb") as fout:
+        pickle.dump(clusterstats, fout)
 
 t_obs_h2a, clusters_h2a, cluster_pv_h2a, h0_h2a = clusterstats
-# %%
 
+# %%
 # Visualize the voltage, taking the average of all subjects
 # old images
 epochs_old_plot = list(
@@ -225,6 +212,7 @@ report.add_figure(
     + "image presentation as well as the scalp distribution in the times of interest",
     image_format="PNG",
 )
+
 # Create ROIs by checking channel labels
 # only check tois
 # Visualize the results
@@ -237,6 +225,7 @@ h2a_test = toi_evoked.plot_image(
     titles="Significant timepoints",
     **time_unit,
 )
+
 report.add_figure(
     fig=h2a_test,
     title="h2a sig",
@@ -247,6 +236,7 @@ report.add_figure(
     + "no significant difference in the time window of interest",
     image_format="PNG",
 )
+
 # %%
 # Hypothesis 2b.
 # Do wavelet tranformation on whole epoch to get tfr
@@ -254,9 +244,9 @@ report.add_figure(
 # Note: apply baseline after TF decomposition
 # (https://www.youtube.com/watch?v=9dXG50ychsQ)
 if fname_h2b_wavelet.exists() and not overwrite:
-    file_wavelet_h2b = open(fname_h2b_wavelet, "rb")
-    tfr_diff_list = pickle.load(file_wavelet_h2b)
-    file_wavelet_h2b.close()
+    with open(fname_h2b_wavelet, "rb") as fin:
+        tfr_diff_list = pickle.load(fin)
+
 else:
     tfr_diff_h2b_list = list(
         [
@@ -286,25 +276,27 @@ else:
             for x in epochs_complete
         ]
     )
-    file_wavelet_h2b = open(fname_h2b_wavelet, "wb")
-    pickle.dump(tfr_diff_h2b_list, file_wavelet_h2b)
-    file_wavelet_h2b.close()
+    with open(fname_h2b_wavelet, "wb") as fout:
+        pickle.dump(tfr_diff_h2b_list, fout)
+
 # %%
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs),freq, time, n_vertices (channels)).
 tfr_theta_diff_arr = np.stack(tfr_diff_h2b_list, axis=2).transpose(2, 1, 3, 0)
+
 # %%
 # Make sensor-frequency adjacancy matrix
 tf_timepoints = tfr_theta_diff_arr.shape[2]
 tfr_adjacency = mne.stats.combine_adjacency(
     len(theta_freqs), tf_timepoints, sensor_adjacency
 )
+
 # %%
-# Calculate statistical thresholds, not confirmed
+# Calculate statistical thresholds
 if fname_h2b_cluster.exists() and not overwrite:
-    file_h2b_cluster = open(fname_h2b_cluster, "rb")
-    clusterstats = pickle.load(file_h2b_cluster)
-    file_h2b_cluster.close()
+    with open(fname_h2b_cluster, "rb") as fin:
+        clusterstats = pickle.load(fin)
+
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_theta_diff_arr,
@@ -317,16 +309,17 @@ else:
         tail=tail,
         seed=seed_H2,
     )
-    file_h2b_cluster = open(fname_h2b_cluster, "wb")
-    pickle.dump(tfr_diff_h2b_list, file_h2b_cluster)
-    file_h2b_cluster.close()
+    with open(fname_h2b_cluster, "wb") as fout:
+        pickle.dump(tfr_diff_h2b_list, fout)
 
 t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = clusterstats
 significant_points_h2b = np.where(cluster_pv_h2b < pthresh)[0]
+
 # %%
 # calculate power difference
 tfr_theta_diff = np.average(tfr_theta_diff_arr, axis=0)
 t_obs_h2b_t = t_obs_h2b.transpose(1, 0, 2)
+
 # %%
 # make h2b figure
 h2b_test, axs = plt.subplots(
@@ -358,7 +351,6 @@ for ch_idx in range(0, len(ch_names)):
     plt.ylabel("Frequency (Hz)")
     plt.title(f"Cluster T_val difference new -old \n ({ch_names[ch_idx]})")
 
-
 report.add_figure(
     fig=h2b_test,
     title="h2a sig",
@@ -368,14 +360,15 @@ report.add_figure(
     + "show the corresponding T-statistic",
     image_format="PNG",
 )
+
 # %%
 # Hypothesis 2c.
 # Do wavelet tranformation on whole epoch to get tfr
 # If there is a wavelet file, and overwrite is false, load data
 if fname_h2c_wavelet.exists() and not overwrite:
-    file_wavelet_h2c = open(fname_h2c_wavelet, "rb")
-    tfr_diff_h2c_list = pickle.load(file_wavelet_h2c)
-    file_wavelet_h2c.close()
+    with open(fname_h2c_wavelet, "rb") as fin:
+        tfr_diff_h2c_list = pickle.load(fin)
+
 else:
     tfr_diff_h2c_list = list(
         [
@@ -405,13 +398,14 @@ else:
             for x in epochs_complete
         ]
     )
-    file_wavelet_h2c = open(fname_h2c_wavelet, "wb")
-    pickle.dump(tfr_diff_h2c_list, file_wavelet_h2c)
-    file_wavelet_h2c.close()
+    with open(fname_h2c_wavelet, "wb") as fout:
+        pickle.dump(tfr_diff_h2c_list, fout)
+
 # %%
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs),freq, time, n_vertices (channels)).
 tfr_alpha_diff_arr = np.stack(tfr_diff_h2c_list, axis=2).transpose(2, 1, 3, 0)
+
 # %%
 # Make sensor-frequency adjacancy matrix for alpha channels
 sensor_adjacency_alpha, ch_names_alpha = find_ch_adjacency(
@@ -421,13 +415,13 @@ tf_timepoints_alpha = tfr_alpha_diff_arr.shape[2]
 tfr_adjacency_alpha = mne.stats.combine_adjacency(
     len(alpha_freqs), tf_timepoints_alpha, sensor_adjacency_alpha
 )
+
 # %%
-# Calculate statistical thresholds, h2c
-# Calculate statistical thresholds, not confirmed
+# Calculate statistical thresholds
 if fname_h2c_cluster.exists() and not overwrite:
-    file_h2c_cluster = open(fname_h2c_cluster, "rb")
-    clusterstats_h2c = pickle.load(file_h2c_cluster)
-    file_h2c_cluster.close()
+    with open(fname_h2c_cluster, "rb") as fin:
+        clusterstats_h2c = pickle.load(fin)
+
 else:
     clusterstats_h2c = spatio_temporal_cluster_1samp_test(
         tfr_alpha_diff_arr,
@@ -439,12 +433,12 @@ else:
         tail=tail,
         seed=seed_H2,
     )
-    file_h2c_cluster = open(fname_h2c_cluster, "wb")
-    pickle.dump(tfr_diff_h2c_list, file_h2c_cluster)
-    file_h2c_cluster.close()
+    with open(fname_h2c_cluster, "wb") as fout:
+        pickle.dump(tfr_diff_h2c_list, fout)
 
 t_obs_h2c, clusters_h2c, cluster_pv_h2c, h0_h2c = clusterstats_h2c
 significant_points_h2c = np.where(cluster_pv_h2c < pthresh)[0]
+
 # %%
 # calculate power difference
 tfr_alpha_diff = np.average(tfr_alpha_diff_arr, axis=0)

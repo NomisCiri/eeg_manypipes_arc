@@ -71,6 +71,13 @@ if you need to edit or overwrite the files (not recommended), you can run `datal
 Under `.github/workflows/run_analysis.yml` we have specified a test workflow that may be
 helpful for you to inspect.
 
+## Running the code
+
+Before running the code on your system you must:
+
+1. Obtain the data (see above)
+1. Edit `config.py` to include the path to your data (see `FPATH_DS` variable)
+
 ## Description of files
 
 - files unrelated to analysis
@@ -121,7 +128,6 @@ do
     python -u 01_find_bads.py \
         --sub=$i \
         --overwrite=True \
-        --fpath_ds="path/to/my/dataset"
 done
 ```
 

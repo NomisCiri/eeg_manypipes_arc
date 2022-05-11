@@ -34,6 +34,10 @@ elif "runner" in home:
 else:
     raise RuntimeError(f"unknown home: {home}. Add it to config.py!")
 
+# The raw data in .set format
+FNAME_RAW_SET_TEMPLATE = os.path.join(
+    str(FPATH_DS), "sourcedata", "eeg_eeglab", "EMP{sub:02}.set"
+)
 # The original events.csv files
 FNAME_EVENTS_TEMPLATE = os.path.join(
     str(FPATH_DS), "sourcedata", "events", "EMP{sub:02}_events.csv"
@@ -84,6 +88,7 @@ FNAME_BAD_EPOS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-epochs.json"
 )
 # Hypotheses tests
+FNAME_HYPOTHESES_1_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h1", "{h}")
 FNAME_HYPOTHESES_2_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h2", "{h}")
 FNAME_HYPOTHESES_3_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h3", "{h}")
 FNAME_HYPOTHESES_4_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h4", "{h}")
@@ -107,10 +112,15 @@ SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))
 
 OVERWRITE_MSG = "\nfile exists and overwrite is False:\n\n>>> {}\n"
 PATH_NOT_FOUND_MSG = "\npath not found\n\n>>> {}\n"
+FPATH_DS_NOT_FOUND_MSG = (
+    "Did not find the path:\n\n>>> {}\n"
+    "\n>>Did you define the path to the data on your system in `config.py`? "
+    "See the FPATH_DS variable!<<\n"
+)
 
 # Filtering
 LOW_CUTOFF = 0.1
-HIGH_CUTOFF = 40
+HIGH_CUTOFF = 100
 NOTCH_FREQS = [50, 100]
 
 # Events
@@ -123,6 +133,3 @@ TRIGGER_CODES = [
 
 # This channel is flat
 REF_CHANNEL = "POz"
-
-# Path to hypothesis derivatves
-PATH_HYPO_2 = os.path.join(str(FPATH_DS), "derivatives", "h1")

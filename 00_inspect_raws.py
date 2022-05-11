@@ -1,18 +1,31 @@
-"""Inspect raw files manually."""
+"""Inspect raw data interactively."""
 # %%
-# imports
+# Imports
 import mne
 
-from config import FPATH_DS
+from config import (
+    FNAME_ICA_TEMPLATE,
+    FNAME_RAW_SET_TEMPLATE,
+    FPATH_DS,
+    FPATH_DS_NOT_FOUND_MSG,
+)
 from utils import get_raw_data
 
-# %matplotlib #toggle interactive mode
 # %%
-# inspect raw data
-sub = 4
-fpath_set = FPATH_DS / "sourcedata" / "eeg_eeglab" / f"EMP{sub:02}.set"
-raw = get_raw_data(fpath_set)
-# raw.filter(l_freq=0.1, h_freq=40)
+# Filepaths and settings
+sub = 4  # change interactively
+
+if not FPATH_DS.exists():
+    raise RuntimeError(FPATH_DS_NOT_FOUND_MSG.format(FPATH_DS))
+
+# %%
+# Load raw data
+raw = get_raw_data(FNAME_RAW_SET_TEMPLATE.format(sub=sub))
+raw.load_data()
+raw.filter(l_freq=0.1, h_freq=40)
+
+# %%
+# Inspect raw data
 raw.plot(
     block=True,
     use_opengl=False,
@@ -23,8 +36,12 @@ raw.plot(
 )
 
 # %%
-# inspect ica timecourse
-fpath_ica = FPATH_DS / "derivatives" / f"EMP{sub:02}" / f"EMP{sub:02}_ica.fif.gz"
-ica = mne.preprocessing.read_ica(fpath_ica)
-# raw.load_data().filter(l_freq=0.1, h_freq=40)
-ica.plot_sources(inst=raw)
+# Inspect ica timecourse
+fname_ica = FNAME_ICA_TEMPLATE.format(sub=sub)
+if fname_ica.exists():
+    ica = mne.preprocessing.read_ica(fname_ica)
+    ica.plot_sources(inst=raw)
+else:
+    print("ICA data does not (yet) exist.")
+
+# %%
