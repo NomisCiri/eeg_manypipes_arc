@@ -120,7 +120,7 @@ ar.save(fname_ar_object, overwrite=overwrite)
 # Plot reject log and save
 with sns.plotting_context("talk"):
     fig, ax = plt.subplots(figsize=(30, 20))
-    reject_log.plot("horizontal", ax=ax)
+    reject_log.plot(orientation="horizontal", ax=ax, show=False)
 
 fig.savefig(fname_ar_plot, bbox_inches="tight")
 
