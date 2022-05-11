@@ -34,7 +34,21 @@ import os
 import subprocess
 from pathlib import Path
 
-from config import BAD_SUBJS, FPATH_DS, SUBJS
+import datalad.api as datalad
+
+from config import (
+    BAD_SUBJS,
+    FNAME_AR_PLOT_TEMPLATE,
+    FNAME_BAD_EPOS_TEMPLATE,
+    FNAME_BADS_TEMPLATE,
+    FNAME_COMPONENTS_TEMPLATE,
+    FNAME_EPO_CLEAN_TEMPLATE,
+    FNAME_ICA_TEMPLATE,
+    FNAME_REPORT_ICA_TEMPLATE,
+    FNAME_SEGMENTS_TEMPLATE,
+    FPATH_DS,
+    SUBJS,
+)
 
 # %%
 # Filepaths and settings
@@ -152,12 +166,34 @@ with open(handin_dir / "README.txt", "w") as fout:
 
 # %%
 # Create subject folders
+folders = {
+    "a": template_3a,
+    "b": template_3b,
+    "c": template_3c,
+    "d": template_3d,
+}
+files = {
+    "a": [FNAME_EPO_CLEAN_TEMPLATE],
+    "b": [FNAME_ICA_TEMPLATE, FNAME_REPORT_ICA_TEMPLATE, FNAME_COMPONENTS_TEMPLATE],
+    "c": [FNAME_BAD_EPOS_TEMPLATE, FNAME_SEGMENTS_TEMPLATE],
+    "d": [FNAME_AR_PLOT_TEMPLATE, FNAME_BADS_TEMPLATE],
+}
+
 for sub in SUBJS[:1]:
 
-    # Create folder for this subj
-    Path(template_3a.format(sub=sub)).mkdir(parents=True, exist_ok=True)
-    Path(template_3b.format(sub=sub)).mkdir(parents=True, exist_ok=True)
-    Path(template_3c.format(sub=sub)).mkdir(parents=True, exist_ok=True)
-    Path(template_3d.format(sub=sub)).mkdir(parents=True, exist_ok=True)
+    for job in "abcd":
+        folder = folders[job]
+        file_list = files[job]
+
+        # Create folder
+        Path(folder.format(sub=sub)).mkdir(parents=True, exist_ok=True)
+
+        # Copy files
+        for file in file_list:
+            src = file.format(sub=sub)
+            dest = src.replace(str(fpath_ds), str(data_dir))
+
+            datalad.run(cmd=f"cp --archive {src} {dest}")
+
 
 # %%
