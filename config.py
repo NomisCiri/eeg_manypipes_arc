@@ -83,9 +83,16 @@ FNAME_AR_PLOT_TEMPLATE = os.path.join(
 FNAME_BAD_EPOS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-epochs.json"
 )
+# Hypotheses tests
+FNAME_HYPOTHESES_2_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h2", "{h}")
+FNAME_HYPOTHESES_3_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h3", "{h}")
+FNAME_HYPOTHESES_4_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h4", "{h}")
 
 # H1 files
 FNAME_REPORT_H1 = FPATH_DS / "derivatives" / "report-H1.html"
+FNAME_REPORT_H2 = FPATH_DS / "derivatives" / "report-H2.html"
+FNAME_REPORT_H3 = FPATH_DS / "derivatives" / "report-H3.html"
+FNAME_REPORT_H4 = FPATH_DS / "derivatives" / "report-H4.html"
 
 # Constants
 # --------------------------------------------------------------------
@@ -93,6 +100,7 @@ FNAME_REPORT_H1 = FPATH_DS / "derivatives" / "report-H1.html"
 BAD_SUBJS = {
     14: "bad performance, see 00_find_bad_subjs.py",
     31: "bad performance, see 00_find_bad_subjs.py",
+    7: "odd artifacts in data, see 00_inspect_raws",
 }
 # originally, subjects from 1 to 33
 SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))
@@ -115,3 +123,6 @@ TRIGGER_CODES = [
 
 # This channel is flat
 REF_CHANNEL = "POz"
+
+# Path to hypothesis derivatves
+PATH_HYPO_2 = os.path.join(str(FPATH_DS), "derivatives", "h1")

@@ -5,7 +5,6 @@
 3. Save report
 4. Apply average reference
 5. Save clean epochs
-
 """
 
 # %%
