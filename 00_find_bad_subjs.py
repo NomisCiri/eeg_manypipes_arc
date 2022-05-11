@@ -15,7 +15,12 @@ analysis.
 import pandas as pd
 from scipy import stats
 
-from config import FNAME_EVENTS_TEMPLATE, FPATH_DS, OVERWRITE_MSG, PATH_NOT_FOUND_MSG
+from config import (
+    FNAME_EVENTS_TEMPLATE,
+    FPATH_DS,
+    FPATH_DS_NOT_FOUND_MSG,
+    OVERWRITE_MSG,
+)
 
 # %%
 # Filepaths and settings
@@ -23,7 +28,7 @@ rejection_threshold = 0.6  # dprime threshold used to exclude participants
 overwrite = True
 
 if not FPATH_DS.exists():
-    raise RuntimeError(PATH_NOT_FOUND_MSG.format(FPATH_DS))
+    raise RuntimeError(FPATH_DS_NOT_FOUND_MSG.format(FPATH_DS))
 
 # %%
 # Check overwrite

@@ -112,6 +112,11 @@ SUBJS = np.array(list(set(range(1, 34)) - set(BAD_SUBJS)))
 
 OVERWRITE_MSG = "\nfile exists and overwrite is False:\n\n>>> {}\n"
 PATH_NOT_FOUND_MSG = "\npath not found\n\n>>> {}\n"
+FPATH_DS_NOT_FOUND_MSG = (
+    "Did not find the path:\n\n>>> {}\n"
+    "\n>>Did you define the path to the data on your system in `config.py`? "
+    "See the FPATH_DS variable!<<\n"
+)
 
 # Filtering
 LOW_CUTOFF = 0.1

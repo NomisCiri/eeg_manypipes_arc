@@ -7,7 +7,7 @@ from config import (
     FNAME_ICA_TEMPLATE,
     FNAME_RAW_SET_TEMPLATE,
     FPATH_DS,
-    PATH_NOT_FOUND_MSG,
+    FPATH_DS_NOT_FOUND_MSG,
 )
 from utils import get_raw_data
 
@@ -16,7 +16,7 @@ from utils import get_raw_data
 sub = 4  # change interactively
 
 if not FPATH_DS.exists():
-    raise RuntimeError(PATH_NOT_FOUND_MSG.format(FPATH_DS))
+    raise RuntimeError(FPATH_DS_NOT_FOUND_MSG.format(FPATH_DS))
 
 # %%
 # Load raw data

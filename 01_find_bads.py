@@ -13,8 +13,8 @@ from config import (
     FNAME_BADS_TEMPLATE,
     FNAME_RAW_SET_TEMPLATE,
     FPATH_DS,
+    FPATH_DS_NOT_FOUND_MSG,
     OVERWRITE_MSG,
-    PATH_NOT_FOUND_MSG,
     REF_CHANNEL,
     SUBJS,
 )
@@ -46,7 +46,7 @@ if not hasattr(sys, "ps1"):
 if sub not in SUBJS:
     raise ValueError(f"'{sub}' is not a valid subject ID.\nUse: {SUBJS}")
 if not FPATH_DS.exists():
-    raise RuntimeError(PATH_NOT_FOUND_MSG.format(FPATH_DS))
+    raise RuntimeError(FPATH_DS_NOT_FOUND_MSG.format(FPATH_DS))
 if overwrite:
     logger.info("`overwrite` is set to ``True``.")
 

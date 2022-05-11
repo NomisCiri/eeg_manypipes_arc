@@ -47,7 +47,7 @@ from config import (
     FNAME_REPORT_ICA_TEMPLATE,
     FNAME_SEGMENTS_TEMPLATE,
     FPATH_DS,
-    PATH_NOT_FOUND_MSG,
+    FPATH_DS_NOT_FOUND_MSG,
     SUBJS,
 )
 
@@ -55,7 +55,7 @@ from config import (
 # Filepaths and settings
 
 if not FPATH_DS.exists():
-    raise RuntimeError(PATH_NOT_FOUND_MSG.format(FPATH_DS))
+    raise RuntimeError(FPATH_DS_NOT_FOUND_MSG.format(FPATH_DS))
 
 handin_dir = FPATH_DS.parent / "EMP_hand_in"
 scripts_dir = handin_dir / "Scripts"
