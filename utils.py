@@ -89,12 +89,3 @@ def event2id(event_str):
         event_id.append(trigger_code[int(event_factor)])
 
     return "/".join(event_id)
-
-
-def catch(func, handle=lambda e: e, *args, **kwargs):
-    """Catch error when using lambda in list comprehension."""
-    try:
-        return func(*args, **kwargs)
-    except Exception as e:
-        print(e)
-        return None

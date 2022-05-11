@@ -34,7 +34,7 @@ from config import (
     SUBJS,
     TRIGGER_CODES,
 )
-from utils import catch, parse_overwrite
+from utils import parse_overwrite
 
 # %%
 # Filepaths and settings
@@ -116,8 +116,7 @@ triggers_old = [
 # %%
 # Reads in all epochs
 epochs = [
-    catch(lambda: mne.read_epochs(fname=FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)))
-    for sub in SUBJS
+    mne.read_epochs(fname=FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)) for sub in SUBJS
 ]
 
 # %%
