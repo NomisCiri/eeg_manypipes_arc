@@ -32,6 +32,7 @@ from config import (
     FNAME_SEGMENTS_TEMPLATE,
     FPATH_DS,
     FPATH_DS_NOT_FOUND_MSG,
+    NOTCH_FREQS,
     OVERWRITE_MSG,
     PATH_NOT_FOUND_MSG,
     SUBJS,
@@ -251,7 +252,7 @@ raw_clean = ica.apply(inst=raw_copy)
 # Visually screen data for absence of blinks and saccades
 # first remove line noise (on a copy)
 raw_clean_copy = raw_clean.copy()
-raw_clean_copy.notch_filter([50, 100])
+raw_clean_copy.notch_filter(NOTCH_FREQS)
 raw_clean_copy.plot(
     block=True,
     use_opengl=False,
