@@ -1,18 +1,16 @@
 """Test the hypotheses specified in the instructions.
 
-Hypotheses read:
-3. There are effects of successful recognition of old images (i.e., a difference between
-old images correctly recognized as old [hits] vs. old images incorrectly judged as new
-[misses]) ...
-a. ... on EEG voltage at any channels, at any time.
-b. ... on spectral power, at any frequencies, at any channels, at any time.
+> There are effects of successful recognition of old images
+> (i.e., a difference between old images correctly recognized as old [hits] vs.
+> old images incorrectly judged as new [misses]) ...
+> a. ... on EEG voltage at any channels, at any time.
+> b. ... on spectral power, at any frequencies, at any channels, at any time.
+
 """
-
-
-import itertools
 
 # %%
 # Imports
+import itertools
 import os
 import pickle
 import sys
@@ -37,7 +35,7 @@ from config import (
 from utils import catch, parse_overwrite
 
 # %%
-# Path and settings
+# Filepaths and settings
 fpath_ds = FPATH_DS
 overwrite = True
 fname_report = FNAME_REPORT_H3
@@ -52,8 +50,9 @@ tail = 0  # two-tailed, see also "pthresh / 2" below
 thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
 sigma = 1e-3  # sigma for the small variance correction
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-seed_H3 = 42
 nperm = 10000
+seed_H3 = 42
+
 
 # Time frequency
 freqs = np.logspace(*np.log10([4, 100]), num=40).round()
@@ -139,20 +138,22 @@ evokeds_diff_list = list(
     ]
 )
 # add list elements along array axis and reshape for permutation test
-evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
 # Concatanate conditions for use with cluster based permutation test
+evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
+
 # %%
 # Calculate adjacency matrix between sensors from their locations
 sensor_adjacency, ch_names = find_ch_adjacency(epochs_complete[1].copy().info, "eeg")
+
 # %%
-# Calculate statistical thresholds, h3a confirmed
+# Calculate statistical thresholds
 # Check overwrite
 # If there is a cluster test, and overwrite is false, load data
 
 if fname_h3a.exists() and not overwrite:
-    file = open(fname_h3a, "rb")
-    clusterstats = pickle.load(file)
-    file.close()
+    with open(fname_h3a, "rb") as fin:
+        clusterstats = pickle.load(fin)
+
 # If overwriting is false compute everything again
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
@@ -161,12 +162,11 @@ else:
         n_permutations=nperm,
         adjacency=sensor_adjacency,
         stat_fun=stat_fun_hat,
-        tail=0,
+        tail=tail,
         seed=seed_H3,
     )
-    file = open(fname_h3a, "wb")
-    pickle.dump(clusterstats, file)
-    file.close()
+    with open(fname_h3a, "wb") as fout:
+        pickle.dump(clusterstats, fout)
 
 t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = clusterstats
 sig_cluster_inds_h3a = np.where(cluster_pv_h3a < pthresh)[0]
@@ -175,9 +175,8 @@ sig_cluster_inds_h3a = np.where(cluster_pv_h3a < pthresh)[0]
 # Do wavelet tranformation on whole epoch to get tfr
 # If there is a wavelet file test, and overwrite is false, load data
 if fname_h3b_wavelet.exists() and not overwrite:
-    file_wavelet = open(fname_h3b_wavelet, "rb")
-    tfr_diff_list = pickle.load(file_wavelet)
-    file.close()
+    with open(fname_h3b_wavelet, "rb") as fin:
+        tfr_diff_list = pickle.load(fin)
 else:
     tfr_diff_list = list(
         [
@@ -206,9 +205,9 @@ else:
             for x in epochs_complete
         ]
     )
-    file = open(fname_h3b_wavelet, "wb")
-    pickle.dump(tfr_diff_list, file)
-    file.close()
+    with open(fname_h3b_wavelet, "wb") as fout:
+        pickle.dump(tfr_diff_list, fout)
+
 # %%
 # Concatanate conditions for use with cluster based permutation test
 # required format: (n_observations (subs),freq, time, n_vertices (channels)).
@@ -221,9 +220,9 @@ tfr_adjacency = mne.stats.combine_adjacency(len(freqs), tf_timepoints, sensor_ad
 # do clusterstats
 # If there is a cluster test filse, and overwrite is false, load data
 if fname_h3b_cluster.exists() and not overwrite:
-    file_cluster = open(fname_h3b_cluster, "rb")
-    clusterstats_h3b = pickle.load(file)
-    file.close()
+    with open(fname_h3b_cluster, "rb") as fin:
+        clusterstats_h3b = pickle.load(fin)
+
 else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_diff_arr,
@@ -231,13 +230,12 @@ else:
         n_permutations=10000,
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
-        tail=0,
+        tail=tail,
         n_jobs=40,
         seed=seed_H3,
     )
-    file_h3b_cluster = open(fname_h3b_cluster, "wb")
-    pickle.dump(clusterstats, file_h3b_cluster)
-    file_h3b_cluster.close()
+    with open(fname_h3b_cluster, "wb") as fout:
+        pickle.dump(clusterstats, fout)
 
 t_obs_diff_h3b, clusters_diff_h3b, cluster_pv_diff_h3b, h0_diff_h3b = clusterstats
 sig_cluster_inds_h3b = np.where(cluster_pv_diff_h3b < pthresh)[0]

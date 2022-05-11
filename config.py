@@ -84,6 +84,7 @@ FNAME_BAD_EPOS_TEMPLATE = os.path.join(
     str(FPATH_DS), "derivatives", "EMP{sub:02}", "EMP{sub:02}_bad-epochs.json"
 )
 # Hypotheses tests
+FNAME_HYPOTHESES_1_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h1", "{h}")
 FNAME_HYPOTHESES_2_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h2", "{h}")
 FNAME_HYPOTHESES_3_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h3", "{h}")
 FNAME_HYPOTHESES_4_TEMPLATE = os.path.join(str(FPATH_DS), "derivatives", "h4", "{h}")
@@ -123,6 +124,3 @@ TRIGGER_CODES = [
 
 # This channel is flat
 REF_CHANNEL = "POz"
-
-# Path to hypothesis derivatves
-PATH_HYPO_2 = os.path.join(str(FPATH_DS), "derivatives", "h1")

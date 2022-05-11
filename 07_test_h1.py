@@ -44,7 +44,7 @@ pthresh = 0.05  # general significance alpha level
 pthresh_cluster = 0.001  # cluster forming alpha level
 tail = 0  # two-tailed, see also "pthresh / 2" below
 thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
-nperm = 5000
+nperm = 10000
 seed_H1 = 59739
 # Run test only over frontal to centro-parietal channels
 ch_exclude_permtest = [
