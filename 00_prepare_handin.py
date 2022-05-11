@@ -193,7 +193,7 @@ for sub in SUBJS[:1]:
             src = file.format(sub=sub)
             dest = src.replace(str(fpath_ds), str(data_dir))
 
-            datalad.run(cmd=f"cp --archive {src} {dest}")
+            datalad.run(cmd=f"cp --archive {src} {dest}", inputs=src)
 
 
 # %%
