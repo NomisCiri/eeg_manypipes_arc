@@ -121,7 +121,6 @@ do
     python -u 01_find_bads.py \
         --sub=$i \
         --overwrite=True \
-        --fpath_ds="path/to/my/dataset"
 done
 ```
 

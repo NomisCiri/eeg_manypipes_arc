@@ -21,19 +21,12 @@ import seaborn as sns
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm.auto import tqdm
 
-from config import (
-    FNAME_EPO_CLEAN_TEMPLATE,
-    FNAME_REPORT_H1,
-    FPATH_DS,
-    OVERWRITE_MSG,
-    SUBJS,
-)
+from config import FNAME_EPO_CLEAN_TEMPLATE, FNAME_REPORT_H1, OVERWRITE_MSG, SUBJS
 from utils import parse_overwrite
 
 # %%
 # Filepaths and settings
 
-fpath_ds = FPATH_DS
 fname_report = FNAME_REPORT_H1
 # epochs as loaded are from -1.5 to 2.5, but this is too long for this ERP analysis
 # 1s (or up to 3s) prior to 0s is ITI, 0s to 0.5s is image presentation, then response,
@@ -95,11 +88,9 @@ ch_exclude_permtest = [
 # https://docs.python.org/3/library/sys.html#sys.ps1
 if not hasattr(sys, "ps1"):
     defaults = dict(
-        fpath_ds=fpath_ds,
         overwrite=overwrite,
     )
     defaults = parse_overwrite(defaults)
-    fpath_ds = defaults["fpath_ds"]
     overwrite = defaults["overwrite"]
 
 # %%
