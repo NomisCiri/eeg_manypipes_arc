@@ -3,28 +3,28 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.9
+  - python<3.10
   - pip
-  - numpy
-  - scipy
-  - pandas
-  - matplotlib
-  - seaborn
-  - statsmodels
-  - mne-base
-  - h5io
-  - h5py
-  - pymatreader
-  - pyprep
-  - autoreject
-  - ipython
-  - ipykernel
-  - pre-commit
-  - black
-  - isort
-  - flake8
-  - flake8-docstrings
-  - click
-  - psutil
+  - numpy<1.23
+  - scipy<1.9
+  - pandas<1.5
+  - matplotlib<3.6
+  - seaborn<0.12
+  - statsmodels<0-14
+  - mne-base<1.1
+  - h5io<0.2
+  - h5py<3.7
+  - pymatreader<0.1
+  - pyprep<0.5
+  - autoreject<0.4
+  - ipython<8.3
+  - ipykernel<6.13
+  - pre-commit<2.19
+  - black<22.4
+  - isort<5.11
+  - flake8<4.1
+  - flake8-docstrings<1.7
+  - click<8.2
+  - psutil<5.10
   - pip:
-    - datalad
+    - datalad<0.17

@@ -127,7 +127,7 @@ for i in {1..33}
 do
     python -u 01_find_bads.py \
         --sub=$i \
-        --overwrite=True \
+        --overwrite=True
 done
 ```
 
