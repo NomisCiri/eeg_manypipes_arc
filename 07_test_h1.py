@@ -21,7 +21,13 @@ import seaborn as sns
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm.auto import tqdm
 
-from config import FNAME_EPO_CLEAN_TEMPLATE, FNAME_REPORT_H1, OVERWRITE_MSG, SUBJS
+from config import (
+    FNAME_EPO_CLEAN_TEMPLATE,
+    FNAME_REPORT_H1,
+    HIGH_CUTOFF_TIMEDOMAIN,
+    OVERWRITE_MSG,
+    SUBJS,
+)
 from utils import parse_overwrite
 
 # %%
@@ -105,6 +111,7 @@ evokeds = {i: [] for i in conditions}
 for sub in tqdm(SUBJS):
     fname = FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)
     epochs = mne.read_epochs(fname, preload=True, verbose=0)
+    epochs.filter(l_freq=None, h_freq=HIGH_CUTOFF_TIMEDOMAIN)
     epochs.crop(*crop, verbose=0)
     epochs.apply_baseline(baseline=baseline, verbose=0)
 
