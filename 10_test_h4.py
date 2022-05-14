@@ -41,6 +41,10 @@ fname_h4a = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4a_cluster.pkl"))
 fname_h4b_wavelet = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_wavelet.pkl"))
 fname_h4b_cluster = Path(FNAME_HYPOTHESES_4_TEMPLATE.format(h="h4b_cluster.pkl"))
 
+# Make sure the save directories exist
+for _fname in [fname_h4a, fname_h4b_wavelet, fname_h4b_cluster]:
+    _fname.parent.mkdir(parents=True, exist_ok=True)
+
 # Settings for cluster test
 pthresh = 0.05  # general significance alpha level
 pthresh_cluster = 0.001  # cluster forming alpha level
@@ -114,11 +118,10 @@ report = mne.Report(title="Hypothesis 4")
 
 # %%
 # Reads in all epochs
-epochs = [
+epochs_complete = [
     mne.read_epochs(fname=FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)) for sub in SUBJS
 ]
-#  Keep only existing subs
-epochs_complete = list(filter(None.__ne__, epochs))
+
 # %%
 # Get a list of epochs in the desired timerange and with the desired channels.
 # already put it into the format needed for permutation test

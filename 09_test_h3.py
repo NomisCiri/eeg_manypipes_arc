@@ -41,6 +41,10 @@ fname_h3a = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3a_cluster.pkl"))
 fname_h3b_wavelet = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_wavelet.pkl"))
 fname_h3b_cluster = Path(FNAME_HYPOTHESES_3_TEMPLATE.format(h="h3b_cluster.pkl"))
 
+# Make sure the save directories exist
+for _fname in [fname_h3a, fname_h3b_wavelet, fname_h3b_cluster]:
+    _fname.parent.mkdir(parents=True, exist_ok=True)
+
 # Settings for cluster test
 pthresh = 0.05  # general significance alpha level
 pthresh_cluster = 0.001  # cluster forming alpha level
@@ -116,11 +120,9 @@ report = mne.Report(title="Hypothesis 3")
 
 # %%
 # Reads in all epochs
-epochs = [
+epochs_complete = [
     mne.read_epochs(fname=FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)) for sub in SUBJS
 ]
-#  Keep only existing subs
-epochs_complete = list(filter(None.__ne__, epochs))
 
 # %%
 # Get a list of epochs in the desired timerange and with the desired channels.

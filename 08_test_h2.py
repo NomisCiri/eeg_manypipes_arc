@@ -45,6 +45,16 @@ fname_h2b_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2b_cluster.pkl")
 fname_h2c_wavelet = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_wavelet.pkl"))
 fname_h2c_cluster = Path(FNAME_HYPOTHESES_2_TEMPLATE.format(h="h2c_cluster.pkl"))
 
+# Make sure the save directories exist
+for _fname in [
+    fname_h2a,
+    fname_h2b_wavelet,
+    fname_h2b_cluster,
+    fname_h2c_wavelet,
+    fname_h2c_cluster,
+]:
+    _fname.parent.mkdir(parents=True, exist_ok=True)
+
 # Settings for cluster test
 pthresh = 0.05  # general significance alpha level
 pthresh_cluster = 0.001  # cluster forming alpha level
@@ -111,13 +121,9 @@ triggers_old = [
 ]
 # %%
 # Reads in all epochs
-epochs = [
+epochs_complete = [
     mne.read_epochs(fname=FNAME_EPO_CLEAN_TEMPLATE.format(sub=sub)) for sub in SUBJS
 ]
-
-# %%
-#  Keep only existing subs
-epochs_complete = list(filter(None.__ne__, epochs))
 
 # %%
 # Get a list of epochs in the desired time range and with the desired channels.
