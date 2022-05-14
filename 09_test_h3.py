@@ -48,11 +48,11 @@ tail = 0  # two-tailed, see also "pthresh / 2" below
 thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
 sigma = 1e-3  # sigma for the small variance correction
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-nperm = 10000
+nperm = 5000
 seed_H3 = 42
 
 # Time frequency
-freqs = np.logspace(*np.log10([4, 100]), num=40).round()
+freqs = np.unique(np.logspace(*np.log10([4, 100]), num=40).round())
 n_cycles = freqs / 2.0  # different number of cycle per frequency
 n_cycles.round()
 
@@ -122,8 +122,18 @@ epochs_complete = list(filter(None.__ne__, epochs))
 evokeds_diff_list = list(
     [
         np.subtract(
-            x[triggers_hits].crop(toi_min, toi_max).average().get_data(),
-            x[triggers_misses].crop(toi_min, toi_max).average().get_data(),
+            x[triggers_hits]
+            .crop(toi_min, toi_max)
+            .filter(h_freq=40, l_freq=None)
+            .apply_baseline(baseline=(None, 0))
+            .average()
+            .get_data(),
+            x[triggers_misses]
+            .crop(toi_min, toi_max)
+            .filter(h_freq=40, l_freq=None)
+            .apply_baseline(baseline=(None, 0))
+            .average()
+            .get_data(),
         )
         for x in epochs_complete
     ]
@@ -179,9 +189,10 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=6,
+                    n_jobs=40,
                 )
                 .crop(toi_min, toi_max)
+                .apply_baseline(baseline=(None, -0.1))
                 .data,
                 tfr_morlet(
                     x[triggers_misses],
@@ -189,9 +200,10 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=6,
+                    n_jobs=40,
                 )
                 .crop(toi_min, toi_max)
+                .apply_baseline(baseline=(None, -0.1))
                 .data,
             )
             for x in epochs_complete
@@ -221,11 +233,11 @@ else:
     clusterstats = spatio_temporal_cluster_1samp_test(
         tfr_diff_arr,
         threshold=thresh,
-        n_permutations=10000,
+        n_permutations=nperm,
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
         tail=tail,
-        n_jobs=6,
+        n_jobs=40,
         seed=seed_H3,
     )
     with open(fname_h3b_cluster, "wb") as fout:

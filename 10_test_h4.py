@@ -48,11 +48,11 @@ tail = 0  # two-tailed, see also "pthresh / 2" below
 sigma = 1e-3  # sigma for the small variance correction
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
-nperm = 10000
+nperm = 5000
 seed_H4 = 1984
 
 # Time frequency
-freqs = np.logspace(*np.log10([4, 100]), num=40).round()
+freqs = np.unique(np.logspace(*np.log10([4, 100]), num=40).round())
 n_cycles = freqs / 2.0  # different number of cycle per frequency
 n_cycles.round()
 # toi
@@ -64,7 +64,7 @@ triggers_remembered_list = list(
         list(TRIGGER_CODES[0].values()),
         list(TRIGGER_CODES[1].values()),
         list(TRIGGER_CODES[2].values()),
-        "sub_remembered",
+        ["sub_remembered"],
     )
 )
 # List of all trigger combinations for an old image
@@ -73,7 +73,7 @@ triggers_forgotten_list = list(
         list(TRIGGER_CODES[0].values()),
         list(TRIGGER_CODES[1].values()),
         list(TRIGGER_CODES[2].values()),
-        "sub_forgotten",
+        ["sub_forgotten"],
     )
 )
 # %%
@@ -119,13 +119,15 @@ evokeds_diff_list = list(
     [
         np.subtract(
             x[triggers_remembered]
+            .filter(h_freq=40, l_freq=None)
             .crop(toi_min, toi_max)
-            .apply_baseline(None, 0)
+            .apply_baseline(baseline=(None, 0))
             .average()
             .get_data(),
             x[triggers_forgotten]
+            .filter(h_freq=40, l_freq=None)
             .crop(toi_min, toi_max)
-            .apply_baseline(None, 0)
+            .apply_baseline(baseline=(None, 0))
             .average()
             .get_data(),
         )
@@ -185,8 +187,9 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=6,
+                    n_jobs=40,
                 )
+                .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
                 .data,
                 tfr_morlet(
@@ -195,8 +198,9 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=6,
+                    n_jobs=40,
                 )
+                .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
                 .data,
             )
@@ -232,7 +236,7 @@ else:
         stat_fun=stat_fun_hat,
         tail=tail,
         seed=seed_H4,
-        njobs=40,
+        n_jobs=40,
     )
     with open(fname_h4b_cluster, "wb") as fout:
         pickle.dump(clusterstats, fout)

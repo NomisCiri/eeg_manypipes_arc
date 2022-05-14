@@ -52,7 +52,7 @@ tail = 0  # two-tailed, see also "pthresh / 2" below
 sigma = 1e-3  # sigma for the small variance correction
 thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
-nperm = 10000
+nperm = 5000
 seed_H2 = 1991
 
 # Time frequency
@@ -127,12 +127,14 @@ evokeds_diff_list = list(
     [
         np.subtract(
             x[triggers_old]
+            .filter(h_freq=40, l_freq=None)
             .apply_baseline(baseline=(None, 0))
             .crop(toi_min, toi_max)
             .pick_channels(ch_fronto_central)
             .average()
             .get_data(),
             x[triggers_new]
+            .filter(h_freq=40, l_freq=None)
             .apply_baseline(baseline=(None, 0))
             .crop(toi_min, toi_max)
             .pick_channels(ch_fronto_central)
@@ -257,8 +259,9 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=6,
+                    n_jobs=40,
                 )
+                .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
                 .data,
                 tfr_morlet(
@@ -267,9 +270,9 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=6,
+                    n_jobs=40,
                 )
-                .apply_baseline(None, -0.1)
+                .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
                 .data,
             )
@@ -303,7 +306,7 @@ else:
         threshold=thresh,
         n_permutations=nperm,
         adjacency=tfr_adjacency,
-        n_jobs=6,
+        n_jobs=40,
         stat_fun=stat_fun_hat,
         out_type="mask",
         tail=tail,
@@ -379,9 +382,10 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=6,
+                    n_jobs=40,
                 )
                 .crop(toi_min, toi_max)
+                .apply_baseline(baseline=(None, -0.1))
                 .data,
                 tfr_morlet(
                     x[triggers_old].pick_channels(ch_posterior),
@@ -389,10 +393,10 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=6,
+                    n_jobs=40,
                 )
-                .apply_baseline(None, -0.1)
                 .crop(toi_min, toi_max)
+                .apply_baseline(baseline=(None, -0.1))
                 .data,
             )
             for x in epochs_complete
@@ -432,6 +436,7 @@ else:
         out_type="mask",
         tail=tail,
         seed=seed_H2,
+        n_jobs=40,
     )
     with open(fname_h2c_cluster, "wb") as fout:
         pickle.dump(tfr_diff_h2c_list, fout)
