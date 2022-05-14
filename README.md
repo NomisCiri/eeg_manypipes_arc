@@ -7,6 +7,7 @@ This project contains all code to reproduce the analyses of the
 [EEG manypipes project](https://www.eegmanypipelines.org/).
 
 It is hosted on GitHub: https://github.com/NomisCiri/eeg_manypipes_arc
+
 The archived code can be found on Zenodo: https://doi.org/10.5281/zenodo.6549049
 
 This is a contribution by
