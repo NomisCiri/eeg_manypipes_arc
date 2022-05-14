@@ -51,6 +51,14 @@ thresh = stats.distributions.t.ppf(1 - pthresh_cluster / 2, len(SUBJS) - 1)
 nperm = 5000
 seed_H4 = 1984
 
+ch_exclude_permtest = [
+    "Afp9",
+    "Afp10",
+    "M1",
+    "M2",
+    "Iz",
+]
+
 # Time frequency
 freqs = np.unique(np.logspace(*np.log10([4, 100]), num=40).round())
 n_cycles = freqs / 2.0  # different number of cycle per frequency
@@ -139,13 +147,12 @@ evokeds_diff_arr = np.stack(evokeds_diff_list, axis=2).transpose(2, 1, 0)
 # Concatanate conditions for use with cluster based permutation test
 # %%
 # Calculate adjacency matrix between sensors from their locations
-sensor_adjacency, ch_names_theta = find_ch_adjacency(
-    epochs_complete[1].copy().info, "eeg"
-)
+sensor_adjacency, ch_names = find_ch_adjacency(epochs_complete[1].copy().info, "eeg")
 # %%
 # Calculate statistical thresholds
 # Check overwrite
 # If there is a cluster test, and overwrite is false, load data
+spatial_exclude = [ch_names.index(i) for i in ch_exclude_permtest]
 
 if fname_h4a.exists() and not overwrite:
     with open(fname_h4a, "rb") as fin:
@@ -162,6 +169,7 @@ else:
         stat_fun=stat_fun_hat,
         tail=tail,
         seed=seed_H4,
+        spatial_exclude=spatial_exclude,
     )
     with open(fname_h4a, "wb") as fout:
         pickle.dump(clusterstats, fout)
@@ -237,6 +245,7 @@ else:
         tail=tail,
         seed=seed_H4,
         n_jobs=40,
+        spatial_exclude=spatial_exclude,
     )
     with open(fname_h4b_cluster, "wb") as fout:
         pickle.dump(clusterstats, fout)

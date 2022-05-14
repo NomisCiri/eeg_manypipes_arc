@@ -51,6 +51,13 @@ stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 nperm = 5000
 seed_H3 = 42
 
+ch_exclude_permtest = [
+    "Afp9",
+    "Afp10",
+    "M1",
+    "M2",
+    "Iz",
+]
 # Time frequency
 freqs = np.unique(np.logspace(*np.log10([4, 100]), num=40).round())
 n_cycles = freqs / 2.0  # different number of cycle per frequency
@@ -150,6 +157,7 @@ sensor_adjacency, ch_names = find_ch_adjacency(epochs_complete[1].copy().info, "
 # Calculate statistical thresholds
 # Check overwrite
 # If there is a cluster test, and overwrite is false, load data
+spatial_exclude = [ch_names.index(i) for i in ch_exclude_permtest]
 
 if fname_h3a.exists() and not overwrite:
     with open(fname_h3a, "rb") as fin:
@@ -165,6 +173,7 @@ else:
         stat_fun=stat_fun_hat,
         tail=tail,
         seed=seed_H3,
+        spatial_exclude=spatial_exclude,
     )
     with open(fname_h3a, "wb") as fout:
         pickle.dump(clusterstats, fout)
@@ -239,6 +248,7 @@ else:
         tail=tail,
         n_jobs=40,
         seed=seed_H3,
+        spatial_exclude=spatial_exclude,
     )
     with open(fname_h3b_cluster, "wb") as fout:
         pickle.dump(clusterstats, fout)
@@ -257,3 +267,5 @@ tfr_specs_dummy = tfr_morlet(
     return_itc=False,
     n_jobs=6,
 ).crop(toi_min, toi_max)
+
+# %%

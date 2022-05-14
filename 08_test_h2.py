@@ -316,7 +316,6 @@ else:
         pickle.dump(tfr_diff_h2b_list, fout)
 
 t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = clusterstats
-significant_points_h2b = np.where(cluster_pv_h2b < pthresh)[0]
 
 # %%
 # calculate power difference
