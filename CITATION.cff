@@ -2,11 +2,10 @@
 #
 # To do:
 # - add "preferred-citation" once the EEGManyLabs report is published
-# - add identifier to Zenodo archive (doi) once we make a release of the repo
 ---
 # Metadata for citation of this software according to the CFF format (https://citation-file-format.github.io/)
 cff-version: 1.2.0
-title: eComp Analysis Code
+title: eeg_manypipes_arc -- EEGManyPipelines Analysis Code
 authors:
   - given-names: Stefan
     family-names: Appelhoff
@@ -22,6 +21,10 @@ authors:
 type: software
 repository-code: 'https://github.com/NomisCiri/eeg_manypipes_arc/'
 license: MIT
+identifiers:
+  - description: "Code archive on Zenodo"
+    type: doi
+    value: 10.5281/zenodo.6549049
 keywords:
   - analysis
   - neuroscience

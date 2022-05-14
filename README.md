@@ -1,12 +1,13 @@
 [![Run analysis](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml/badge.svg?branch=main&event=push)](https://github.com/NomisCiri/eeg_manypipes_arc/actions/workflows/run_analysis.yml)
 [![DOI](https://zenodo.org/badge/476738961.svg)](https://zenodo.org/badge/latestdoi/476738961)
 
-# eeg_manypipes_arc
+# eeg_manypipes_arc -- EEGManyPipelines Analysis Code
 
 This project contains all code to reproduce the analyses of the
 [EEG manypipes project](https://www.eegmanypipelines.org/).
 
 It is hosted on GitHub: https://github.com/NomisCiri/eeg_manypipes_arc
+The archived code can be found on Zenodo: https://doi.org/10.5281/zenodo.6549049
 
 This is a contribution by
 [Stefan Appelhoff](https://stefanappelhoff.com/),
