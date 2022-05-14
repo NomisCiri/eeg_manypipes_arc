@@ -384,8 +384,8 @@ else:
                     return_itc=False,
                     n_jobs=40,
                 )
-                .crop(toi_min, toi_max)
                 .apply_baseline(baseline=(None, -0.1))
+                .crop(toi_min, toi_max)
                 .data,
                 tfr_morlet(
                     x[triggers_old].pick_channels(ch_posterior),
@@ -395,8 +395,8 @@ else:
                     return_itc=False,
                     n_jobs=40,
                 )
-                .crop(toi_min, toi_max)
                 .apply_baseline(baseline=(None, -0.1))
+                .crop(toi_min, toi_max)
                 .data,
             )
             for x in epochs_complete
