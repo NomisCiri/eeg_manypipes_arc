@@ -195,7 +195,7 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=40,
+                    n_jobs=6,
                 )
                 .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
@@ -206,7 +206,7 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=40,
+                    n_jobs=6,
                 )
                 .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
@@ -244,7 +244,7 @@ else:
         stat_fun=stat_fun_hat,
         tail=tail,
         seed=seed_H4,
-        n_jobs=40,
+        n_jobs=6,
         spatial_exclude=spatial_exclude,
     )
     with open(fname_h4b_cluster, "wb") as fout:

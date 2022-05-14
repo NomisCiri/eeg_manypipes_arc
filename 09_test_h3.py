@@ -198,7 +198,7 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=40,
+                    n_jobs=6,
                 )
                 .crop(toi_min, toi_max)
                 .apply_baseline(baseline=(None, -0.1))
@@ -209,7 +209,7 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=40,
+                    n_jobs=6,
                 )
                 .crop(toi_min, toi_max)
                 .apply_baseline(baseline=(None, -0.1))
@@ -246,7 +246,7 @@ else:
         adjacency=tfr_adjacency,
         stat_fun=stat_fun_hat,
         tail=tail,
-        n_jobs=40,
+        n_jobs=6,
         seed=seed_H3,
         spatial_exclude=spatial_exclude,
     )

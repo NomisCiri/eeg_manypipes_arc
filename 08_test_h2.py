@@ -259,7 +259,7 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=40,
+                    n_jobs=6,
                 )
                 .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
@@ -270,7 +270,7 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=40,
+                    n_jobs=6,
                 )
                 .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
@@ -306,7 +306,7 @@ else:
         threshold=thresh,
         n_permutations=nperm,
         adjacency=tfr_adjacency,
-        n_jobs=40,
+        n_jobs=6,
         stat_fun=stat_fun_hat,
         out_type="mask",
         tail=tail,
@@ -381,7 +381,7 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=40,
+                    n_jobs=6,
                 )
                 .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
@@ -392,7 +392,7 @@ else:
                     n_cycles=n_cycles,
                     average=True,
                     return_itc=False,
-                    n_jobs=40,
+                    n_jobs=6,
                 )
                 .apply_baseline(baseline=(None, -0.1))
                 .crop(toi_min, toi_max)
@@ -435,7 +435,7 @@ else:
         out_type="mask",
         tail=tail,
         seed=seed_H2,
-        n_jobs=40,
+        n_jobs=6,
     )
     with open(fname_h2c_cluster, "wb") as fout:
         pickle.dump(tfr_diff_h2c_list, fout)
