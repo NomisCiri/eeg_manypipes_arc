@@ -22,7 +22,7 @@ Original documentation provided by the organizers can be found in the `organizer
 `sourcedata` and `derivatives` of this project are stored on GIN:
 [https://gin.g-node.org/sappelhoff/eeg_manypipes_arc](https://gin.g-node.org/sappelhoff/eeg_manypipes_arc)
 
-The report for the analysis is in `REPORT.md`
+The report for the analysis is in `REPORT.txt`
 
 ## Installation
 
@@ -95,7 +95,7 @@ Before running the code on your system you must:
 
 All other files are related to the analysis.
 
-- `REPORT.md`, containing four short paragraphs on the analysis of the four hypotheses
+- `REPORT.txt`, containing four short paragraphs on the analysis of the four hypotheses
 - `config.py`, definitions of stable **variables** that are reused throughout other scripts; for example file paths
 - `utils.py`, definitions of **functions** that are reused throughout other scripts
 
