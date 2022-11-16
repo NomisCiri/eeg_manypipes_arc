@@ -267,7 +267,7 @@ raw_clean_copy.plot(
 raw_clean.save(fname_icaraw, overwrite=overwrite)
 
 # %%
-# Save the report
-report.save(fname_report, overwrite=overwrite)
+# Save report
+report.save(fname_report, open_browser=False, overwrite=overwrite)
 
 # %%

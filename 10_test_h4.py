@@ -269,3 +269,7 @@ tfr_specs_dummy = tfr_morlet(
 ).crop(toi_min, toi_max)
 
 # %%
+# Save report
+report.save(fname_report, open_browser=False, overwrite=overwrite)
+
+# %%

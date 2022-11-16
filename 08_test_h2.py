@@ -498,7 +498,7 @@ report.add_figure(
 )
 
 # %%
-# save report
-report.save(fname_report, overwrite=overwrite)
+# Save report
+report.save(fname_report, open_browser=False, overwrite=overwrite)
 
 # %%
