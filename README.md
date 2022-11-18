@@ -96,6 +96,7 @@ Before running the code on your system you must:
 All other files are related to the analysis.
 
 - `REPORT.txt`, containing four short paragraphs on the analysis of the four hypotheses
+- `report_sheets/EEGManyPipelines_results_h*.xlsx`, Excel files with information about the analysis. Note `h*` stands for hypotheses 1, 2a, 3a, ..., 4b.
 - `config.py`, definitions of stable **variables** that are reused throughout other scripts; for example file paths
 - `utils.py`, definitions of **functions** that are reused throughout other scripts
 
