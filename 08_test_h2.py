@@ -185,13 +185,6 @@ else:
 
 t_obs_h2a, clusters_h2a, cluster_pv_h2a, h0_h2a = clusterstats
 
-# loop over clusters and save significant channels.
-cluster_chs_h2a = [
-    np.asarray(ch_fronto_central)[np.unique(np.where(clusters_h2a[0])[1])]
-    for clusters in range(0, len(clusters_h2a))
-]
-
-# np.asarray(ch_fronto_central)[arrr]
 # %%
 # Visualize the voltage, taking the average of all subjects
 # old images
@@ -251,6 +244,30 @@ report.add_figure(
     + "no significant difference in the time window of interest",
     image_format="PNG",
 )
+
+# %%
+# get times and sensors of signifcant clusters
+
+# get start time and end time of each cluster
+cluster_time_h2a = [
+    [
+        np.min(
+            np.asarray(toi_evoked.times)[np.unique(np.where(clusters_h2a[clusters])[0])]
+        ),  # get min time of cluster
+        np.max(
+            np.asarray(toi_evoked.times)[np.unique(np.where(clusters_h2a[clusters])[0])]
+        ),  # get max time of cluster
+    ]
+    for clusters in range(0, len(clusters_h2a))
+]
+
+
+# loop over clusters and save significant channels.
+cluster_chs_h2a = [
+    np.asarray(ch_fronto_central)[np.unique(np.where(clusters_h2a[clusters])[1])]
+    for clusters in range(0, len(clusters_h2a))
+]
+# np.asarray(ch_fronto_central)[arrr]
 
 # %%
 # Hypothesis 2b.
@@ -328,8 +345,22 @@ else:
     with open(fname_h2b_cluster, "wb") as fout:
         pickle.dump(tfr_diff_h2b_list, fout)
 
-t_obs_h2b, cluster_h2b, cluster_pv_h2b, h0_h2b = clusterstats
+t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = clusterstats
 
+# loop over clusters and check for channels in dim 1
+cluster_chs_h2b = [
+    np.asarray(ch_fronto_central)[
+        np.unique(np.where(clusters_h2b[clusters_h2b_idx])[2])
+    ]
+    for clusters_h2b_idx in range(0, len(clusters_h2b))
+]
+# loop over clusters and check for frequencies in dim 0
+cluster_freqs_h2b = [
+    np.asarray(ch_fronto_central)[
+        np.unique(np.where(clusters_h2b[clusters_h2b_idx])[0])
+    ]
+    for clusters_h2b_idx in range(0, len(clusters_h2b))
+]
 # %%
 # calculate power difference
 tfr_theta_diff = np.average(tfr_theta_diff_arr, axis=0)
