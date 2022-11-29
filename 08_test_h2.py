@@ -248,7 +248,7 @@ report.add_figure(
 # %%
 # get times and sensors of signifcant clusters
 
-# get start time and end time of each cluster
+# get cluster defining start time and end time
 cluster_time_h2a = [
     [
         np.min(
@@ -262,7 +262,7 @@ cluster_time_h2a = [
 ]
 
 
-# loop over clusters and save significant channels.
+# get cluster defining channels
 cluster_chs_h2a = [
     np.asarray(ch_fronto_central)[np.unique(np.where(clusters_h2a[clusters])[1])]
     for clusters in range(0, len(clusters_h2a))
