@@ -185,6 +185,13 @@ else:
 
 t_obs_h2a, clusters_h2a, cluster_pv_h2a, h0_h2a = clusterstats
 
+# loop over clusters and save significant channels.
+cluster_chs_h2a = [
+    np.asarray(ch_fronto_central)[np.unique(np.where(clusters_h2a[0])[1])]
+    for clusters in range(0, len(clusters_h2a))
+]
+
+# np.asarray(ch_fronto_central)[arrr]
 # %%
 # Visualize the voltage, taking the average of all subjects
 # old images
