@@ -400,23 +400,27 @@ report.add_figure(
 cluster_time_h2b = [
     [
         np.min(
-            np.asarray(toi_evoked.times)[np.unique(np.where(clusters_h2b[clusters])[1])]
+            np.asarray(toi_evoked.times)[
+                np.unique(np.where(clusters_h2b[clusters_h2b_idx])[1])
+            ]
         ),  # get min time of cluster
         np.max(
-            np.asarray(toi_evoked.times)[np.unique(np.where(clusters_h2b[clusters])[1])]
+            np.asarray(toi_evoked.times)[
+                np.unique(np.where(clusters_h2b[clusters_h2b_idx])[1])
+            ]
         ),  # get max time of cluster
     ]
-    for clusters in range(0, len(clusters_h2b))
+    for clusters_h2b_idx in range(0, len(clusters_h2b))
 ]
 
-# get cluster defining freqs
+# get cluster defining sensors
 cluster_chs_h2b = [
     np.asarray(ch_fronto_central)[
         np.unique(np.where(clusters_h2b[clusters_h2b_idx])[2])
     ]
     for clusters_h2b_idx in range(0, len(clusters_h2b))
 ]
-# get cluster defining sensors
+# get cluster defining freqs
 cluster_freqs_h2b = [
     np.asarray(theta_freqs)[np.unique(np.where(clusters_h2b[clusters_h2b_idx])[0])]
     for clusters_h2b_idx in range(0, len(clusters_h2b))
@@ -551,7 +555,9 @@ report.add_figure(
 )
 
 # %%
-# get times and sensors of signifcant clusters
+# get times, sensors and frequencies of signifcant clusters
+
+# get cluster defining start time and end time
 cluster_time_h2c = [
     [
         np.min(
@@ -563,14 +569,14 @@ cluster_time_h2c = [
     ]
     for clusters in range(0, len(clusters_h2c))
 ]
-
+# get cluster defining sensors
 cluster_chs_h2c = [
     np.asarray(ch_posterior)[np.unique(np.where(clusters_h2c[clusters_h2c_idx])[2])]
     for clusters_h2c_idx in range(0, len(clusters_h2c))
 ]
-# loop over clusters and check for frequencies in dim 0
+# get cluster defining freqs
 cluster_freqs_h2c = [
-    np.asarray(ch_posterior)[np.unique(np.where(clusters_h2b[clusters_h2c_idx])[0])]
+    np.asarray(alpha_freqs)[np.unique(np.where(clusters_h2b[clusters_h2c_idx])[0])]
     for clusters_h2c_idx in range(0, len(clusters_h2c))
 ]
 

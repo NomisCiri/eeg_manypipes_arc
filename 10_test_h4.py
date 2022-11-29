@@ -181,6 +181,38 @@ t_obs_h4a, clusters_h4a, cluster_pv_h4a, h0_h4a = clusterstats
 sig_cluster_inds_h4a = np.where(cluster_pv_h4a < pthresh)[0]
 
 # %%
+# make dummy to look up times
+dummy_epo_h4a = (
+    epochs_complete[0][triggers_remembered]
+    .crop(toi_min, toi_max)
+    .filter(h_freq=40, l_freq=None)
+    .apply_baseline(baseline=(None, 0))
+    .average()
+)
+# %%
+# get times and sensors of signifcant clusters
+
+# get cluster defining start time and end time
+
+# get cluster defining start time and end time
+cluster_time_h4a = [
+    [
+        np.min(
+            np.asarray(dummy_epo_h4a.times)[clusters_h4a[clusters_h4a_idx][0]]
+        ),  # get min time of cluster
+        np.max(
+            np.asarray(dummy_epo_h4a.times)[clusters_h4a[clusters_h4a_idx][0]]
+        ),  # get max time of cluster
+    ]
+    for clusters_h4a_idx in sig_cluster_inds_h4a
+]
+
+cluster_chs_h4a = [
+    np.unique(np.asarray(ch_names)[clusters_h4a[clusters_h4a_idx][1]])
+    for clusters_h4a_idx in sig_cluster_inds_h4a
+]
+
+# %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
 # If there is a wavelet file test, and overwrite is false, load data
@@ -267,6 +299,33 @@ tfr_specs_dummy = tfr_morlet(
     return_itc=False,
     n_jobs=6,
 ).crop(toi_min, toi_max)
+
+# %%
+# get times, sensors and freqs of signifcant clusters
+
+# get cluster defining start time and end time
+cluster_time_h4b = [
+    [
+        np.min(
+            np.asarray(tfr_specs_dummy.times)[clusters_diff_h4b[clusters_h4b_idx][1]]
+        ),  # get min time of cluster
+        np.max(
+            np.asarray(tfr_specs_dummy.times)[clusters_diff_h4b[clusters_h4b_idx][1]]
+        ),  # get max time of cluster
+    ]
+    for clusters_h4b_idx in sig_cluster_inds_h4b
+]
+
+cluster_chs_h4b = [
+    np.unique(np.asarray(ch_names)[clusters_diff_h4b[clusters_h4b_idx][2]])
+    for clusters_h4b_idx in sig_cluster_inds_h4b
+]
+
+# get cluster defining freqs
+cluster_freqs_h3b = [
+    np.unique(np.asarray(freqs)[clusters_diff_h4b[clusters_h4b_idx][0]])
+    for clusters_h4b_idx in sig_cluster_inds_h4b
+]
 
 # %%
 # Save report
