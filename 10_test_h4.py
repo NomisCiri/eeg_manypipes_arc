@@ -69,7 +69,7 @@ n_cycles = freqs / 2.0  # different number of cycle per frequency
 n_cycles.round()
 # toi
 toi_min = -0.2
-toi_max = 1
+toi_max = 1.5
 # List of all trigger combinations for a new image
 triggers_remembered_list = list(
     itertools.product(
