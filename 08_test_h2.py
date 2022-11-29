@@ -321,7 +321,7 @@ else:
     with open(fname_h2b_cluster, "wb") as fout:
         pickle.dump(tfr_diff_h2b_list, fout)
 
-t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = clusterstats
+t_obs_h2b, cluster_h2b, cluster_pv_h2b, h0_h2b = clusterstats
 
 # %%
 # calculate power difference
