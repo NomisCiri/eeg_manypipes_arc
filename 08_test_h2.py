@@ -347,20 +347,7 @@ else:
 
 t_obs_h2b, clusters_h2b, cluster_pv_h2b, h0_h2b = clusterstats
 
-# loop over clusters and check for channels in dim 1
-cluster_chs_h2b = [
-    np.asarray(ch_fronto_central)[
-        np.unique(np.where(clusters_h2b[clusters_h2b_idx])[2])
-    ]
-    for clusters_h2b_idx in range(0, len(clusters_h2b))
-]
-# loop over clusters and check for frequencies in dim 0
-cluster_freqs_h2b = [
-    np.asarray(ch_fronto_central)[
-        np.unique(np.where(clusters_h2b[clusters_h2b_idx])[0])
-    ]
-    for clusters_h2b_idx in range(0, len(clusters_h2b))
-]
+
 # %%
 # calculate power difference
 tfr_theta_diff = np.average(tfr_theta_diff_arr, axis=0)
@@ -406,6 +393,34 @@ report.add_figure(
     + "show the corresponding T-statistic",
     image_format="PNG",
 )
+# %%
+# get times, sensors and frequencies of signifcant clusters
+
+# get cluster defining start time and end time
+cluster_time_h2b = [
+    [
+        np.min(
+            np.asarray(toi_evoked.times)[np.unique(np.where(clusters_h2b[clusters])[1])]
+        ),  # get min time of cluster
+        np.max(
+            np.asarray(toi_evoked.times)[np.unique(np.where(clusters_h2b[clusters])[1])]
+        ),  # get max time of cluster
+    ]
+    for clusters in range(0, len(clusters_h2b))
+]
+
+# get cluster defining freqs
+cluster_chs_h2b = [
+    np.asarray(ch_fronto_central)[
+        np.unique(np.where(clusters_h2b[clusters_h2b_idx])[2])
+    ]
+    for clusters_h2b_idx in range(0, len(clusters_h2b))
+]
+# get cluster defining sensors
+cluster_freqs_h2b = [
+    np.asarray(theta_freqs)[np.unique(np.where(clusters_h2b[clusters_h2b_idx])[0])]
+    for clusters_h2b_idx in range(0, len(clusters_h2b))
+]
 
 # %%
 # Hypothesis 2c.
@@ -534,6 +549,30 @@ report.add_figure(
     + "show the corresponding T-statistic",
     image_format="PNG",
 )
+
+# %%
+# get times and sensors of signifcant clusters
+cluster_time_h2c = [
+    [
+        np.min(
+            np.asarray(toi_evoked.times)[np.unique(np.where(clusters_h2c[clusters])[1])]
+        ),  # get min time of cluster
+        np.max(
+            np.asarray(toi_evoked.times)[np.unique(np.where(clusters_h2c[clusters])[1])]
+        ),  # get max time of cluster
+    ]
+    for clusters in range(0, len(clusters_h2c))
+]
+
+cluster_chs_h2c = [
+    np.asarray(ch_posterior)[np.unique(np.where(clusters_h2c[clusters_h2c_idx])[2])]
+    for clusters_h2c_idx in range(0, len(clusters_h2c))
+]
+# loop over clusters and check for frequencies in dim 0
+cluster_freqs_h2c = [
+    np.asarray(ch_posterior)[np.unique(np.where(clusters_h2b[clusters_h2c_idx])[0])]
+    for clusters_h2c_idx in range(0, len(clusters_h2c))
+]
 
 # %%
 # Save report
