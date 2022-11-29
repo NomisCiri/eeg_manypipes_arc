@@ -193,8 +193,6 @@ dummy_epo_h4a = (
 # get times and sensors of signifcant clusters
 
 # get cluster defining start time and end time
-
-# get cluster defining start time and end time
 cluster_time_h4a = [
     [
         np.min(
