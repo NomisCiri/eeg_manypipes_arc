@@ -267,7 +267,6 @@ cluster_chs_h2a = [
     np.asarray(ch_fronto_central)[np.unique(np.where(clusters_h2a[clusters])[1])]
     for clusters in range(0, len(clusters_h2a))
 ]
-# np.asarray(ch_fronto_central)[arrr]
 
 # %%
 # Hypothesis 2b.
