@@ -183,6 +183,38 @@ else:
 t_obs_h3a, clusters_h3a, cluster_pv_h3a, h0_h3a = clusterstats
 
 sig_cluster_inds_h3a = np.where(cluster_pv_h3a < pthresh)[0]
+
+
+# %%
+# make dummy to look up precice timing
+dummy_epo_h3a = (
+    epochs_complete[0][triggers_hits]
+    .crop(toi_min, toi_max)
+    .filter(h_freq=40, l_freq=None)
+    .apply_baseline(baseline=(None, 0))
+    .average()
+)
+# %%
+# get times, and sensors of signifcant clusters
+
+# get cluster defining start time and end time
+cluster_time_h3a = [
+    [
+        np.min(
+            np.asarray(dummy_epo_h3a.times)[clusters_h3a[clusters_h3a_idx][0]]
+        ),  # get min time of cluster
+        np.max(
+            np.asarray(dummy_epo_h3a.times)[clusters_h3a[clusters_h3a_idx][0]]
+        ),  # get max time of cluster
+    ]
+    for clusters_h3a_idx in sig_cluster_inds_h3a
+]
+
+cluster_chs_h3a = [
+    np.unique(np.asarray(ch_names)[clusters_h3a[clusters_h3a_idx][1]])
+    for clusters_h3a_idx in sig_cluster_inds_h3a
+]
+
 # %%
 # Hypothesis 3b.
 # Do wavelet tranformation on whole epoch to get tfr
@@ -270,6 +302,34 @@ tfr_specs_dummy = tfr_morlet(
     n_jobs=6,
 ).crop(toi_min, toi_max)
 
+# %%
+# get times, sensors and freqs of signifcant clusters
+
+# get cluster defining start time and end time
+cluster_time_h3b = [
+    [
+        np.min(
+            np.asarray(tfr_specs_dummy.times)[clusters_diff_h3b[clusters_h3b_idx][1]]
+        ),  # get min time of cluster
+        np.max(
+            np.asarray(tfr_specs_dummy.times)[clusters_diff_h3b[clusters_h3b_idx][1]]
+        ),  # get max time of cluster
+    ]
+    for clusters_h3b_idx in sig_cluster_inds_h3b
+]
+
+cluster_chs_h3b = [
+    np.unique(np.asarray(ch_names)[clusters_diff_h3b[clusters_h3b_idx][2]])
+    for clusters_h3b_idx in sig_cluster_inds_h3b
+]
+
+# get cluster defining freqs
+cluster_freqs_h3b = [
+    np.unique(np.asarray(freqs)[clusters_diff_h3b[clusters_h3b_idx][0]])
+    for clusters_h3b_idx in sig_cluster_inds_h3b
+]
+
+# %%
 # %%
 # Save report
 report.save(fname_report, open_browser=False, overwrite=overwrite)
