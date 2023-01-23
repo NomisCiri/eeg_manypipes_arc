@@ -22,6 +22,9 @@ Original documentation provided by the organizers can be found in the `organizer
 `sourcedata` and `derivatives` of this project are stored on GIN:
 [https://gin.g-node.org/sappelhoff/eeg_manypipes_arc](https://gin.g-node.org/sappelhoff/eeg_manypipes_arc)
 
+**UPDATE 2023-01-23** 
+**-- AT REQUEST OF THE EEG MANY PIPELINES STEERING COMMITTEE, WE TURNED THE ACCESS TO THE DATA REPOSITORY TO PRIVATE.**
+
 The report for the analysis is in `REPORT.txt`
 
 ## Installation
