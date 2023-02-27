@@ -32,7 +32,6 @@ if fname_autoreject_outputs.exists() and not overwrite:
 columns = ["subject", "n_rejected_epochs", "consensus", "n_interpolate"]
 data = {i: [] for i in columns}
 for sub in SUBJS:
-
     # load autoreject estimates
     fname_ar = Path(FNAME_AR_OBJECT_TEMPLATE.format(sub=sub))
     ar = autoreject.read_auto_reject(fname_ar)
