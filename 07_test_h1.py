@@ -358,7 +358,6 @@ report.add_figure(
 # Visualize significant clusters
 iclu_sig = 0
 for iclu in range(len(clusters)):
-
     # only viz significant clusters
     pval = cluster_pv[iclu]
     if pval >= pthresh:
@@ -428,7 +427,6 @@ for iclu in range(len(clusters)):
 # plot clusters as image
 iclu_sig = 0
 for iclu in range(len(clusters)):
-
     # only viz significant clusters
     pval = cluster_pv[iclu]
     if pval >= pthresh:

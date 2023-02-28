@@ -183,7 +183,6 @@ files = {
 }
 
 for sub in tqdm(SUBJS):
-
     for job in "abcd":
         folder = Path(folders[job].format(sub=sub))
         file_list = files[job]

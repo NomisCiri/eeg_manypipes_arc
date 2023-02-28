@@ -140,7 +140,6 @@ ica = read_ica(fname_ica)
 # %%
 # If not interactive, exclude components and exit
 if not interactive:
-
     # file with components to exclude must exist
     if not fname_comps.exists():
         raise RuntimeError(PATH_NOT_FOUND_MSG.format(fname_comps))
